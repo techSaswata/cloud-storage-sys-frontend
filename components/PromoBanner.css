@@ -1,0 +1,172 @@
+.promo-banner-wrapper {
+  display: block;
+  flex: 1;
+  font-family: "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  margin-top: 0px;
+  margin-left: 24px;
+}
+
+.promo-banner-container {
+  display: block;
+  border-radius: 12px;
+  background-color: rgb(4, 56, 98);
+}
+
+.promo-banner-content {
+  display: flex;
+  min-height: 32px;
+  box-sizing: border-box;
+  padding: 12px 0;
+  border-radius: 12px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  color: rgb(243, 242, 241);
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.promo-banner-inner {
+  display: flex;
+  width: 100%;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.promo-icon-container {
+  display: flex;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 8px 0 8px 12px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.promo-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+  color: rgb(0, 120, 212);
+}
+
+.promo-text-container {
+  display: flex;
+  flex: 1 1 auto;
+  margin: 8px 4px 8px 8px;
+  font-size: 12px;
+  color: rgb(243, 242, 241);
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.promo-message {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 12px;
+  line-height: 16px;
+  color: rgb(243, 242, 241);
+}
+
+.promo-title {
+  display: inline;
+  margin-right: 15px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: nowrap;
+  color: rgb(243, 242, 241);
+}
+
+.promo-description {
+  display: inline-flex;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: nowrap;
+  color: rgb(243, 242, 241);
+}
+
+.promo-actions {
+  display: flex;
+  margin-left: 2px;
+  flex-shrink: 0;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+
+.promo-button-wrapper {
+  display: block;
+}
+
+.promo-button {
+  display: inline-flex;
+  position: relative;
+  min-width: 80px;
+  min-height: 32px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  border: 1px solid rgb(102, 102, 102);
+  border-radius: 6px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  background-color: rgb(27, 26, 25);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  justify-content: center;
+  align-items: center;
+}
+
+.promo-button:hover {
+  background-color: rgb(40, 40, 38);
+  border-color: rgb(120, 120, 120);
+}
+
+.promo-button-text {
+  display: block;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 14px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
+.promo-dismiss {
+  display: block;
+  margin-left: 8px;
+}
+
+.promo-dismiss-button {
+  display: inline-flex;
+  position: relative;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: none;
+  border-radius: 2px;
+  background-color: transparent;
+  font-size: 14px;
+  text-align: center;
+  color: rgb(40, 153, 245);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  justify-content: center;
+  align-items: center;
+}
+
+.promo-dismiss-button:hover {
+  background-color: rgba(40, 153, 245, 0.1);
+}
+
+.promo-dismiss-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
+  color: rgb(243, 242, 241);
+}

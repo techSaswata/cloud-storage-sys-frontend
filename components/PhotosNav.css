@@ -1,0 +1,166 @@
+.photos-nav-container {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+  font-family: 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  color: #adadad;
+}
+
+.photos-nav-list {
+  display: flex;
+  flex-direction: row;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 256px;
+}
+
+.photos-nav-item {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: center;
+  width: 64px;
+  height: 48px;
+  cursor: pointer;
+}
+
+.photos-nav-link-inner {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+}
+
+.photos-nav-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 64px;
+  height: 48px;
+  min-width: 24px;
+  padding: 0 0 2px;
+  border: 1px solid rgba(0, 0, 0, 0);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #adadad;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s linear;
+}
+
+.photos-nav-button.is-selected {
+  color: #ffffff;
+}
+
+.photos-nav-icon-container {
+  display: grid;
+  grid-template: 24px / 28px;
+  width: 62px;
+  height: 24px;
+  justify-content: center;
+  position: relative;
+}
+
+.photos-nav-icon {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  margin: 0 2px;
+  font-style: italic;
+  transition: opacity 0.3s cubic-bezier(0, 0, 0, 1);
+  grid-row: 1;
+  grid-column: 1;
+  justify-self: center;
+}
+
+.photos-nav-icon svg {
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
+}
+
+/* Default state - show regular icon */
+.photos-nav-icon.default-icon {
+  opacity: 1;
+}
+
+.photos-nav-icon.selected-icon {
+  opacity: 0;
+}
+
+.photos-nav-icon.hover-icon {
+  opacity: 0;
+}
+
+/* Hover state - show filled icon with white color */
+.photos-nav-button:hover .photos-nav-icon.default-icon {
+  opacity: 0;
+}
+
+.photos-nav-button:hover .photos-nav-icon.hover-icon {
+  opacity: 1;
+  color: #ffffff;
+}
+
+.photos-nav-button:hover .photos-nav-icon.hover-icon svg {
+  fill: #ffffff;
+}
+
+.photos-nav-button:hover .photos-nav-icon.hover-icon svg path {
+  fill: #ffffff;
+}
+
+/* Selected state - show filled icon with gradient */
+.photos-nav-button.is-selected .photos-nav-icon.default-icon {
+  opacity: 0;
+}
+
+.photos-nav-button.is-selected .photos-nav-icon.selected-icon {
+  opacity: 1;
+}
+
+.photos-nav-button.is-selected .photos-nav-icon.selected-icon svg {
+  fill: url(#icon-gradient);
+}
+
+.photos-nav-button.is-selected .photos-nav-icon.selected-icon svg path {
+  fill: url(#icon-gradient);
+}
+
+.photos-nav-button.is-selected .photos-nav-icon.hover-icon {
+  opacity: 0;
+}
+
+/* Override hover for selected state */
+.photos-nav-button.is-selected:hover .photos-nav-icon.selected-icon {
+  opacity: 1;
+}
+
+.photos-nav-button.is-selected:hover .photos-nav-icon.hover-icon {
+  opacity: 0;
+}
+
+.photos-nav-text {
+  display: block;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+}
+
+.photos-nav-text-ellipsis {
+  display: block;
+  overflow: hidden;
+  max-width: 60px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

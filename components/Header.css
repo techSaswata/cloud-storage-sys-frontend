@@ -1,0 +1,489 @@
+.onedrive-header {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding-top: 15px;
+  padding-left: 9px;
+  margin-top: 0;
+  background-color: #141414;
+  color: #adadad;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex: 1 1 0%;
+}
+
+.header-center {
+  display: flex;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.header-center .search-bar,
+.header-center .photos-nav-container {
+  pointer-events: auto;
+}
+
+/* App Launcher Button */
+.app-launcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: #adadad;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.15s linear, color 0.15s linear;
+  padding: 1px 6px;
+}
+
+.app-launcher:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* OneDrive Logo */
+.onedrive-logo {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+/* View Toggle Switch */
+.view-toggle {
+  margin-left: 8px;
+}
+
+.toggle-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 139.891px;
+  height: 36px;
+  padding: 2px;
+  background-color: #000000;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  box-shadow: rgba(0, 0, 0, 0.8) 0px 0.75px 1.5px 0px inset;
+  transition: background-color 0.15s linear, border-color 0.15s linear;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  height: 32px;
+  background-color: #292929;
+  border-radius: 99px;
+  border: 1px solid transparent;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 0.5px 2px 0px, rgba(255, 255, 255, 0.1) 0px 0.75px 1.5px 0px inset;
+  transition: transform 0.2s cubic-bezier(0.33, 0, 0.1, 1), width 0.2s cubic-bezier(0.33, 0, 0.1, 1), background-color 0.15s linear;
+}
+
+.toggle-slider.left {
+  width: 76.0625px;
+  transform: translateX(0);
+}
+
+.toggle-slider.right {
+  width: 59.8203px;
+  transform: translateX(76.0625px);
+}
+
+.toggle-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 99px;
+  font-family: 'Segoe UI', 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 21px;
+  text-align: center;
+  color: #adadad;
+  cursor: pointer;
+  transition: color 0.15s linear;
+  z-index: 1;
+}
+
+.toggle-button:first-of-type {
+  width: 76.0625px;
+}
+
+.toggle-button:last-of-type {
+  width: 59.8203px;
+}
+
+.toggle-button.active {
+  color: #ffffff;
+}
+
+.toggle-button:hover:not(.active) {
+  color: #d0d0d0;
+}
+
+/* Header Right Section */
+.header-right {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.premium-button-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.premium-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  max-width: 100%;
+  height: 33px;
+  padding: 6px 12px 7px 8px;
+  background-image: linear-gradient(243deg, rgba(74, 146, 255, 0.24) 21.43%, rgba(163, 117, 255, 0.24) 90.25%);
+  border: none;
+  border-radius: 10000px;
+  font-family: 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  text-align: center;
+  color: #d6d6d6;
+  cursor: pointer;
+  transition: background-color 0.15s linear;
+  gap: 2px;
+}
+
+.premium-button:hover {
+  background-image: linear-gradient(243deg, rgba(74, 146, 255, 0.3) 21.43%, rgba(163, 117, 255, 0.3) 90.25%);
+}
+
+.premium-icon-wrapper {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  margin: 0 2px;
+  font-style: italic;
+  flex-shrink: 0;
+}
+
+.premium-icon {
+  display: block;
+  overflow: hidden;
+  width: 20px;
+  height: 20px;
+  color: #4A92FF;
+}
+
+.premium-label {
+  display: block;
+  max-width: fit-content;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  transition: max-width 0.5s cubic-bezier(0.33, 0, 0.1, 1), opacity 0.5s, visibility 0.5s;
+}
+
+.settings-button-container {
+  display: block;
+  width: 48px;
+  height: 48px;
+}
+
+.settings-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  max-width: 100%;
+  padding: 8px 0;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #d6d6d6;
+  cursor: pointer;
+  transition: background-color 0.15s linear, color 0.15s linear;
+}
+
+.settings-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-button svg {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  margin: 0 2px;
+}
+
+/* Settings icon hover effect */
+.settings-icon-regular,
+.settings-icon-filled {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transition: opacity 0.15s linear;
+}
+
+.settings-icon-regular {
+  opacity: 1;
+}
+
+.settings-icon-filled {
+  opacity: 0;
+}
+
+.settings-button:hover .settings-icon-regular {
+  opacity: 0;
+}
+
+.settings-button:hover .settings-icon-filled {
+  opacity: 1;
+}
+
+/* User Profile */
+.user-profile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.profile-button-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  padding: 1px 6px;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background-color 0.15s linear, color 0.15s linear;
+}
+
+.profile-button-wrapper:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.profile-avatar-wrapper {
+  width: 32px;
+  height: 32px;
+}
+
+.profile-avatar {
+  display: flex;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #525252;
+  border-radius: 99px;
+  font-size: 14px;
+  text-align: center;
+  color: #d6d6d6;
+  background-color: #1f1f1f;
+  overflow: hidden;
+}
+
+.profile-initials {
+  display: flex;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-family: 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+/* Search Bar */
+.search-bar {
+  display: flex;
+  align-items: center;
+  width: 480px;
+  max-width: 480px;
+  min-width: 200px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 12px 0 20px;
+  background-color: #292929;
+  border-radius: 10000px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 0.75px 3px 0px;
+  transition: all 0.15s linear;
+}
+
+.search-icon-button {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: #adadad;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s linear;
+}
+
+.search-bar .search-input {
+  flex: 1;
+  width: 100%;
+  height: 32px;
+  padding: 1px 2px;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Segoe UI Web (West European)', -apple-system, 'system-ui', Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 16px;
+  line-height: 20px;
+  color: #adadad;
+  cursor: text;
+  transition: color 0.15s linear;
+}
+
+.search-bar .search-input::placeholder {
+  color: #adadad;
+}
+
+.search-bar .search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-bar:focus-within {
+  background-color: #3a3a3a;
+}
+
+.search-bar:focus-within .search-input {
+  color: #ffffff;
+}
+
+.search-bar:focus-within .search-icon-button {
+  color: #ffffff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .view-toggle {
+    margin-left: 8px;
+  }
+
+  .search-bar {
+    width: 300px;
+    max-width: 300px;
+  }
+
+  .premium-label {
+    display: none;
+  }
+
+  .premium-button {
+    width: 48px;
+    padding: 8px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-launcher {
+    width: 40px;
+    height: 40px;
+  }
+
+  .onedrive-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .toggle-track {
+    width: 120px;
+  }
+
+  .toggle-button {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .search-bar {
+    width: 200px;
+    max-width: 200px;
+    min-width: 150px;
+  }
+
+  .premium-button-container {
+    display: none;
+  }
+
+  .settings-button-container {
+    width: 40px;
+    height: 40px;
+  }
+
+  .settings-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .user-profile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profile-button-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profile-avatar-wrapper {
+    width: 28px;
+    height: 28px;
+  }
+
+  .profile-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .profile-initials {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+}

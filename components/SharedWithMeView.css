@@ -1,0 +1,290 @@
+.shared-with-me-container {
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px;
+  font-family: "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  color: rgb(173, 173, 173);
+  min-height: calc(100vh - 75px);
+}
+
+/* Command Bar Styles */
+.command-bar-wrapper {
+  position: relative;
+  height: 52px;
+  margin-top: 0;
+  align-items: center;
+}
+
+.command-bar {
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  padding: 0 8px;
+  border-radius: 12px;
+  flex-direction: row;
+  align-items: center;
+}
+
+.command-bar-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: row;
+}
+
+.command-bar-secondary {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+}
+
+.command-bar-item {
+  display: block;
+  position: relative;
+  height: 32px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: center;
+  color: rgb(243, 242, 241);
+  background: none;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.command-bar-item:hover {
+  background-color: rgb(51, 50, 49);
+}
+
+.command-bar-item-content {
+  display: flex;
+  height: 100%;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.command-bar-icon {
+  width: 16px;
+  height: 16px;
+  margin: 0 4px;
+  color: rgb(243, 242, 241);
+}
+
+.command-bar-text {
+  display: block;
+  margin: 0 4px;
+  font-size: 14px;
+  line-height: 14px;
+  white-space: nowrap;
+  color: rgb(243, 242, 241);
+}
+
+/* Action Row Container */
+.action-row-container {
+  display: flex;
+  width: 100%;
+  height: 52px;
+  margin-top: 16px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Tab List Styles */
+.tab-list {
+  display: flex;
+  width: auto;
+  height: 34px;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: end;
+}
+
+.tab {
+  display: flex;
+  height: 34px;
+  margin-right: 12px;
+  padding: 4px;
+  border: none;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 24px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  background: none;
+  cursor: pointer;
+  flex-direction: row;
+  align-items: center;
+  transition: all 0.1s ease;
+}
+
+.tab-selected {
+  border-bottom: 2px solid rgb(71, 158, 245);
+}
+
+.tab-unselected {
+  color: rgb(255, 255, 255);
+  opacity: 0.7;
+}
+
+.tab-unselected:hover {
+  opacity: 1;
+}
+
+/* Action Row with Filters */
+.action-row {
+  display: flex;
+  flex: 1 1 0%;
+  flex-direction: row;
+}
+
+/* Filter Pivot Styles */
+.filter-pivot {
+  display: flex;
+  flex-direction: row;
+  border-radius: 18px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+}
+
+.filter-button {
+  display: flex;
+  position: relative;
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgb(102, 102, 102);
+  border-radius: 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  color: rgb(255, 255, 255);
+  background-color: transparent;
+  cursor: pointer;
+  flex-direction: row;
+  align-items: center;
+  transition: all 0.1s ease;
+  margin-right: 8px;
+}
+
+.filter-button:hover {
+  background-color: rgb(51, 50, 49);
+}
+
+.filter-button-selected {
+  border: 1px solid rgb(71, 158, 245);
+  background-color: rgb(8, 35, 56);
+}
+
+.filter-button-selected::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  top: -3px;
+  right: -3px;
+  bottom: -3px;
+  left: -3px;
+  border: 2px solid rgb(71, 158, 245);
+  border-radius: 18px;
+  background-image: linear-gradient(128.84deg, rgb(15, 108, 189) 20.46%, rgb(60, 69, 171) 72.3%);
+  z-index: -1;
+}
+
+.filter-icon {
+  width: 16px;
+  height: 16px;
+  overflow: clip;
+  margin-right: 7px;
+}
+
+.filter-button span {
+  margin-bottom: 2px;
+}
+
+/* Search Box Styles */
+.search-box {
+  display: flex;
+  width: 240px;
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid rgb(102, 102, 102);
+  border-radius: 16px;
+  flex-direction: row;
+  align-items: center;
+  transition: border-color 0.1s ease;
+}
+
+.search-box:focus-within {
+  border-color: rgb(71, 158, 245);
+}
+
+.search-input {
+  display: block;
+  width: 100%;
+  height: 24px;
+  margin-bottom: 2px;
+  padding: 1px 2px;
+  border: none;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 14px;
+  white-space: nowrap;
+  color: rgb(255, 255, 255);
+  background: transparent;
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: rgb(153, 153, 153);
+}
+
+/* Content Area */
+.content-area {
+  display: flex;
+  width: 100%;
+  min-height: 500px;
+  padding: 8px 0 12px;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Empty Content Styles */
+.empty-content {
+  display: flex;
+  max-width: 390px;
+  margin: 0 auto;
+  text-align: center;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.empty-content-title {
+  display: block;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 30px;
+  text-align: center;
+  color: rgb(173, 173, 173);
+  margin-bottom: 24px;
+}
+
+.empty-content-image {
+  display: block;
+  width: 256px;
+  height: 256px;
+  overflow: clip;
+}

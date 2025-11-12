@@ -1,0 +1,831 @@
+/* Microsoft Login2 Page - Dark Theme Card-Based Design */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.login2-container {
+  display: block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  box-sizing: border-box;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(255, 255, 255);
+  background-color: rgb(0, 0, 0);
+  background-image: url('https://logincdn.msftauth.net/shared/5/images/fluent_web_dark_2_bf5f23287bc9f60c9be2.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.login2-middle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.login2-card {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  width: 440px;
+  min-height: 420px;
+  box-sizing: border-box;
+  padding: 40px;
+  border-radius: 12px;
+  background-color: rgb(41, 41, 41);
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 0px 2px 0px, rgba(0, 0, 0, 0.28) 0px 8px 16px 0px;
+}
+
+.login2-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 360px;
+  height: 24px;
+  padding: 0 0 32px;
+  margin-bottom: 0;
+}
+
+.login2-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 24px;
+  height: 24px;
+}
+
+.login2-back-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  max-width: 24px;
+  padding: 1px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: rgb(214, 214, 214);
+  cursor: pointer;
+  transition: background 0.1s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.login2-back-icon-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.login2-logo-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  width: 114px;
+  height: 24px;
+  margin: 0;
+}
+
+.login2-content {
+  display: block;
+  width: 360px;
+}
+
+.login2-title-section {
+  display: block;
+  position: relative;
+  width: 360px;
+  height: 60px;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.login2-title {
+  display: inline;
+  margin: 16px 0;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
+.login2-subtitle {
+  display: block;
+  width: 360px;
+  height: 28px;
+  padding: 8px 0 0;
+  text-align: center;
+  margin: 0;
+}
+
+.login2-subtitle span {
+  display: inline;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-alert-error {
+  display: block;
+  width: 360px;
+  height: auto;
+  min-height: 16px;
+  margin: 0;
+  padding: 4px 0 0 16px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: left;
+  color: rgb(227, 125, 128);
+}
+
+.login2-alert-error::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin: 0 4px 0 -16px;
+  vertical-align: -1px;
+  background-image: url("data:image/svg+xml,%3Csvg fill='rgb(227, 125, 128)' width='12' height='12' viewBox='0 0 12 12' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 11A5 5 0 1 0 6 1a5 5 0 0 0 0 10Zm-.75-2.75a.75.75 0 1 1 1.5 0 .75.75 0 0 1-1.5 0Zm.26-4.84a.5.5 0 0 1 .98 0l.01.09v2.59a.5.5 0 0 1-1 0V3.41Z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.login2-form-section {
+  display: block;
+  width: 360px;
+  padding: 32px 0 0;
+}
+
+.login2-input-container {
+  display: block;
+  position: relative;
+  width: 360px;
+  height: 42px;
+}
+
+.login2-input-wrapper {
+  display: flex;
+  position: relative;
+  align-items: center;
+  width: 360px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  border: 1px solid rgb(102, 102, 102);
+  border-bottom: 1px solid rgb(173, 173, 173);
+  border-radius: 4px;
+  background-color: rgb(41, 41, 41);
+  transition: all 0.1s ease;
+}
+
+.login2-input-wrapper::after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 360px;
+  height: 4px;
+  top: 35px;
+  right: -1px;
+  bottom: -1px;
+  left: -1px;
+  border-bottom: 2px solid rgb(71, 158, 245);
+  border-radius: 0 0 4px 4px;
+  transform: scaleX(0);
+  transition: transform 0.05s;
+  clip-path: inset(calc(100% - 2px) 0 0);
+}
+
+.login2-input-wrapper:focus-within::after {
+  transform: scaleX(1);
+}
+
+.login2-input-label {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: rgb(173, 173, 173);
+  background-color: rgb(41, 41, 41);
+  cursor: text;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.login2-input-wrapper:focus-within .login2-input-label,
+.login2-input-wrapper.has-value .login2-input-label {
+  top: -1px;
+  transform: translateY(-50%);
+  font-size: 13px;
+  line-height: 18px;
+  color: rgb(153, 153, 153);
+}
+
+.login2-input-label label {
+  color: inherit;
+  cursor: text;
+}
+
+.login2-input {
+  display: block;
+  flex: 1;
+  overflow: clip;
+  width: 100%;
+  padding: 0 18px 0 6px;
+  border: none;
+  border-radius: 0;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 16px;
+  line-height: 22px;
+  color: rgb(255, 255, 255);
+  background: transparent;
+  outline: none;
+  cursor: text;
+}
+
+.login2-input::placeholder {
+  color: transparent;
+}
+
+.login2-forgot-link-row {
+  display: block;
+  width: 360px;
+  height: 20px;
+  margin: 8px 0 0;
+}
+
+.login2-forgot-link {
+  display: inline-block;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 16.5px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login2-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.login2-actions {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  height: 70px;
+  padding: 32px 0 0;
+}
+
+.login2-button-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 360px;
+  height: 38px;
+  min-width: 96px;
+  max-width: 100%;
+  padding: 8px 16px;
+  border: 1px solid rgba(0, 0, 0, 0);
+  border-radius: 4px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  background-color: rgb(17, 94, 163);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s cubic-bezier(0.33, 0, 0.67, 1), border 0.1s cubic-bezier(0.33, 0, 0.67, 1), color 0.1s cubic-bezier(0.33, 0, 0.67, 1);
+}
+
+.login2-button-primary:hover {
+  background-color: rgb(20, 108, 189);
+}
+
+.login2-button-primary:active {
+  background-color: rgb(14, 79, 138);
+  transform: scale(0.98);
+}
+
+.login2-button-primary:disabled {
+  background-color: rgba(17, 94, 163, 0.5);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@keyframes button-click {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.login2-button-primary.clicking {
+  animation: button-click 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.login2-footer-text {
+  display: block;
+  width: 360px;
+  height: auto;
+  padding: 32px 0 0;
+  text-align: center;
+  margin-top: 0;
+}
+
+.login2-footer-text span {
+  display: inline;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-create-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login2-create-link:hover {
+  text-decoration: underline;
+}
+
+/* Footer Styles */
+.login2-footer {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  width: 100%;
+  min-height: 24px;
+  box-sizing: border-box;
+  margin: 24px 0;
+  padding: 0 24px;
+  flex-direction: column;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-footer-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+}
+
+.login2-footer-links {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  height: 12px;
+  margin-bottom: 10px;
+}
+
+.login2-footer-link {
+  display: block;
+  position: relative;
+  padding: 0 16px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 12px;
+  line-height: 22px;
+  color: rgb(214, 214, 214);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login2-footer-link:hover {
+  text-decoration: underline;
+}
+
+.login2-footer-info {
+  display: block;
+  width: 100%;
+  text-align: center;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 10px;
+  line-height: 22px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-footer-info-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 22px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login2-footer-info-link:hover {
+  text-decoration: underline;
+}
+
+.login2-footer-text {
+  display: block;
+  width: 360px;
+  height: 52px;
+  padding: 32px 0 0;
+  text-align: center;
+}
+
+.login2-footer-text span {
+  display: inline;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-create-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.login2-create-link:hover {
+  text-decoration: underline;
+}
+
+/* Code view styles */
+.login2-code-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  width: 360px;
+  padding: 0 0 32px;
+  margin-bottom: 0;
+}
+
+.login2-code-header .login2-logo-section {
+  display: flex;
+  justify-content: center;
+  width: 114px;
+  height: 24px;
+}
+
+.login2-code-body {
+  display: block;
+  width: 360px;
+  margin-top: 0;
+}
+
+.login2-email-badge-container {
+  display: flex;
+  justify-content: center;
+  width: 360px;
+  height: 32px;
+  margin: 0 0 16px;
+}
+
+.login2-email-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max-content;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid rgb(82, 82, 82);
+  border-radius: 10000px;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  color: rgb(173, 173, 173);
+  background-color: transparent;
+}
+
+.login2-code-content {
+  display: block;
+  width: 360px;
+  height: 80px;
+  text-align: center;
+}
+
+.login2-code-content .login2-title {
+  display: inline;
+  margin: 16.08px 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 32px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
+.login2-code-content .login2-subtitle {
+  display: block;
+  width: 360px;
+  height: 48px;
+  padding: 8px 0 0;
+  text-align: center;
+  margin: 0;
+}
+
+.login2-subtitle-bold {
+  font-weight: 600;
+  color: rgb(214, 214, 214);
+}
+
+.login2-code-actions {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  height: 38px;
+  padding: 32px 0 0;
+}
+
+.login2-code-actions .login2-button-primary {
+  width: 360px;
+  height: 38px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: rgb(17, 94, 163);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+}
+
+.login2-code-actions .login2-button-primary:hover {
+  background-color: rgb(15, 82, 143);
+}
+
+.login2-code-footer {
+  display: block;
+  width: 360px;
+  height: auto;
+  padding: 16px 0 0;
+  text-align: center;
+  margin-top: 0;
+}
+
+.login2-other-ways-link {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 32px;
+}
+
+.login2-other-ways-link:hover {
+  text-decoration: underline;
+}
+
+/* Code input boxes */
+.login2-code-inputs-section {
+  display: block;
+  width: 360px;
+  padding: 24px 0 0;
+}
+
+.login2-code-inputs-container {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.login2-code-input {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgb(102, 102, 102);
+  border-radius: 4px;
+  background-color: rgb(41, 41, 41);
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 28px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  outline: none;
+  transition: border-color 0.1s ease;
+  caret-color: rgb(255, 255, 255);
+}
+
+.login2-code-input:focus {
+  border-color: rgb(71, 158, 245);
+  border-width: 2px;
+}
+
+.login2-code-input:hover {
+  border-color: rgb(173, 173, 173);
+}
+
+/* Stay Signed In Section */
+.login2-stay-signed-in-body {
+  display: block;
+  width: 360px;
+}
+
+.login2-stay-signed-in-content {
+  display: block;
+  width: 360px;
+  text-align: center;
+}
+
+.login2-stay-signed-in-video-container {
+  display: block;
+  width: 360px;
+  padding: 12px 0;
+}
+
+.login2-video-wrapper {
+  display: block;
+  position: relative;
+  width: 192px;
+  height: 192px;
+  margin: 0 auto;
+}
+
+.login2-video-wrapper::before {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 192px;
+  height: 192px;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  box-shadow: rgb(41, 41, 41) 0px 0px 30px 10px inset;
+  border-radius: 0;
+  pointer-events: none;
+}
+
+.login2-stay-signed-in-video {
+  display: inline;
+  width: 192px;
+  height: 192px;
+  object-fit: cover;
+}
+
+.login2-stay-signed-in-description {
+  display: block;
+  width: 360px;
+  text-align: center;
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  color: rgb(214, 214, 214);
+}
+
+.login2-learn-more-link {
+  font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  color: rgb(71, 158, 245);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.login2-learn-more-link:hover {
+  text-decoration: underline;
+}
+
+.login2-stay-signed-in-actions {
+  display: flex;
+  flex-direction: column;
+  width: 360px;
+  padding: 32px 0 0;
+  gap: 12px;
+}
+
+.login2-stay-signed-in-actions .login2-button-primary {
+  width: 360px;
+  height: 38px;
+  padding: 8px 16px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background-color: rgb(17, 94, 163);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.login2-stay-signed-in-actions .login2-button-primary:hover {
+  background-color: rgb(15, 82, 143);
+}
+
+.login2-stay-signed-in-actions .login2-button-secondary {
+  width: 360px;
+  height: 38px;
+  padding: 8px 16px;
+  border: 1px solid rgb(102, 102, 102);
+  border-radius: 4px;
+  background-color: rgb(41, 41, 41);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  color: rgb(255, 255, 255);
+  cursor: pointer;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.login2-stay-signed-in-actions .login2-button-secondary:hover {
+  background-color: rgb(51, 51, 51);
+  border-color: rgb(122, 122, 122);
+}
+
+.login2-close-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  max-width: 24px;
+  padding: 1px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: rgb(214, 214, 214);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.login2-close-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
