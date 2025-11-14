@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useFiles } from '@/contexts/FilesContext';
-import { BackendFile, getThumbnailUrl, getFileUrl, deleteFile as apiDeleteFile } from '@/lib/apiService';
+import { BackendFile, getThumbnailUrl, getFileUrl, getDownloadUrl, deleteFile as apiDeleteFile } from '@/lib/apiService';
 import { Document24Regular } from '@fluentui/react-icons';
 
 interface MyFilesViewProps {
@@ -43,7 +43,7 @@ function formatFileSize(bytes: number): string {
 // Helper function to get file icon based on type
 function getFileIcon(file: BackendFile): string {
   const type = file.file_type;
-  const ext = file.filename.split('.').pop()?.toLowerCase();
+  const ext = file.filename?.split('.').pop()?.toLowerCase() || '';
   
   if (type === 'image') {
     return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/photo.svg';
@@ -86,8 +86,9 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
         console.error('Failed to open file:', err);
       }
     } else {
-      // For other files, trigger download
-      window.open(`http://localhost:8000/media/${file.file_id}/download`, '_blank');
+      // For other files, trigger download  
+      const downloadUrl = getDownloadUrl(file.file_id);
+      window.open(downloadUrl, '_blank');
     }
   };
 

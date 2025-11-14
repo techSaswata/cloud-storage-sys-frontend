@@ -37,13 +37,21 @@ export default function AuthCallbackPage() {
           });
 
           if (response.ok) {
-            const user = await response.json();
-            localStorage.setItem('user', JSON.stringify(user));
-            console.log('✅ User authenticated:', user.email);
+            const data = await response.json();
+            console.log('📦 Received user data:', data);
+            
+            localStorage.setItem('user', JSON.stringify(data.user));
+            console.log('✅ User authenticated:', data.user.email);
+            console.log('✅ Stored in localStorage:', localStorage.getItem('user'));
             
             setVerifying(false);
-            router.push('/home');
+            
+            console.log('🔀 Redirecting to /home...');
+            // Use window.location for more reliable redirect
+            window.location.href = '/home';
           } else {
+            const errorText = await response.text();
+            console.error('❌ Backend response not ok:', response.status, errorText);
             throw new Error('Failed to get user info from backend');
           }
         } else {

@@ -50,7 +50,7 @@ const CreateUploadDropdown = ({ isOpen, onClose, position, currentFolderId = nul
     }
 
     console.log('Starting upload process...');
-    await uploadMultipleFiles(files, currentFolderId);
+    await uploadMultipleFiles(files);
     console.log('Upload process completed');
 
     // Dispatch custom event to update RecentFiles
