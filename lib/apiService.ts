@@ -262,24 +262,72 @@ export function getThumbnailUrl(fileId: string, size: number = 300): string {
  * Get download URL for a file
  * ⚠️ REQUIRES AUTHENTICATION
  * Note: Include token in URL for direct downloads
+ * @param fileId - The file ID
+ * @param forceDownload - If true, forces download. If false, opens in browser
  */
-export function getDownloadUrl(fileId: string): string {
+export function getDownloadUrl(fileId: string, forceDownload: boolean = true): string {
   const token = localStorage.getItem('access_token');
-  return `${API_BASE}/media/${fileId}/download?token=${token}`;
+  return `${API_BASE}/media/${fileId}/download?token=${token}&download=${forceDownload}`;
 }
 
 /**
- * Delete a file
+ * Soft delete a file (move to recycle bin)
  * ⚠️ REQUIRES AUTHENTICATION - Only deletes if user owns file
  */
 export async function deleteFile(fileId: string): Promise<void> {
-  const response = await fetch(`${API_BASE}/media/${fileId}`, {
+  const response = await fetch(`${API_BASE}/media/${fileId}?permanent=false`, {
     method: 'DELETE',
     headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
     throw new Error('Failed to delete file');
+  }
+}
+
+/**
+ * Permanently delete a file (cannot be restored)
+ * ⚠️ REQUIRES AUTHENTICATION - Only deletes if user owns file
+ */
+export async function permanentlyDeleteFile(fileId: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/media/${fileId}?permanent=true`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to permanently delete file');
+  }
+}
+
+/**
+ * Get files in recycle bin
+ * ⚠️ REQUIRES AUTHENTICATION
+ */
+export async function getRecycleBin(): Promise<{ files: BackendFile[]; count: number }> {
+  const response = await fetch(`${API_BASE}/media/recyclebin`, {
+    headers: getAuthHeaders(),
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to get recycle bin');
+  }
+
+  return response.json();
+}
+
+/**
+ * Restore a file from recycle bin
+ * ⚠️ REQUIRES AUTHENTICATION
+ */
+export async function restoreFile(fileId: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/media/${fileId}/restore`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to restore file');
   }
 }
 

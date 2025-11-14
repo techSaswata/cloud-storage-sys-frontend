@@ -42,13 +42,18 @@ export default function AuthCallbackPage() {
             
             localStorage.setItem('user', JSON.stringify(data.user));
             console.log('✅ User authenticated:', data.user.email);
-            console.log('✅ Stored in localStorage:', localStorage.getItem('user'));
+            console.log('✅ Tokens saved to localStorage:');
+            console.log('   - access_token:', localStorage.getItem('access_token') ? 'SET' : 'NOT SET');
+            console.log('   - refresh_token:', localStorage.getItem('refresh_token') ? 'SET' : 'NOT SET');
+            console.log('   - user:', localStorage.getItem('user') ? 'SET' : 'NOT SET');
             
             setVerifying(false);
             
-            console.log('🔀 Redirecting to /home...');
-            // Use window.location for more reliable redirect
-            window.location.href = '/home';
+            console.log('🔀 Redirecting to /home in 100ms...');
+            // Small delay to ensure localStorage is persisted before redirect
+            setTimeout(() => {
+              window.location.href = '/home';
+            }, 100);
           } else {
             const errorText = await response.text();
             console.error('❌ Backend response not ok:', response.status, errorText);

@@ -45,6 +45,15 @@ export function FilesProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const response = await listFiles({ limit: 500 });
+      console.log('📦 API Response:', response);
+      if (response.files && response.files.length > 0) {
+        console.log('📊 Sample file data:', {
+          filename: response.files[0].filename,
+          file_size: response.files[0].file_size,
+          file_type: response.files[0].file_type,
+          size: (response.files[0] as any).size
+        });
+      }
       setFiles(response.files);
       setError(null);
       

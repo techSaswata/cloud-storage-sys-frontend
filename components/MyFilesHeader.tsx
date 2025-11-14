@@ -16,7 +16,9 @@ import {
   LineHorizontal320Regular,
   PanelRight16Regular
 } from '@fluentui/react-icons';
-import { deleteFiles, moveFiles, copyFiles, updateFile, getAllFiles, getFileById } from '@/lib/fileStore';
+import { moveFiles, copyFiles, updateFile, getAllFiles, getFileById } from '@/lib/fileStore';
+import { getDownloadUrl, deleteFile } from '@/lib/apiService';
+import { useFiles } from '@/contexts/FilesContext';
 import UploadStatusPopup, { type OperationType } from './UploadStatusPopup';
 
 interface MyFilesHeaderProps {
@@ -41,48 +43,64 @@ const MyFilesHeader: React.FC<MyFilesHeaderProps> = ({
   const [statusOperation, setStatusOperation] = useState<OperationType | null>(null);
   const [statusItemName, setStatusItemName] = useState('');
   const [statusCount, setStatusCount] = useState(1);
+  const { refreshFiles } = useFiles();
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedFiles.size === 0) return;
 
     const fileIds = Array.from(selectedFiles);
     const count = fileIds.length;
 
-    // Get first file name for single file deletion
-    if (count === 1) {
-      const file = getFileById(fileIds[0]);
-      if (file) {
-        setStatusItemName(file.name);
-      }
-    }
+    const confirmMessage = count === 1 
+      ? 'Are you sure you want to move this file to recycle bin?'
+      : `Are you sure you want to move ${count} files to recycle bin?`;
+
+    if (!confirm(confirmMessage)) return;
 
     setStatusCount(count);
     setStatusOperation('deleting-file');
 
-    // Simulate deletion process
-    setTimeout(() => {
-      deleteFiles(fileIds);
+    try {
+      // Delete each file (soft delete - moves to recycle bin)
+      for (const fileId of fileIds) {
+        await deleteFile(fileId);
+      }
+
       setStatusOperation('file-deleted');
       onClearSelection?.();
+      
+      // Refresh the file list
+      await refreshFiles();
+      
+      console.log(`✓ ${count} file(s) moved to recycle bin`);
 
       // Auto-hide after showing success
       setTimeout(() => {
         setStatusOperation(null);
-      }, 5500);
-    }, 500);
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to delete files:', err);
+      alert('Failed to delete files');
+      setStatusOperation(null);
+    }
   };
 
   const handleDownload = () => {
     if (selectedFiles.size === 0) return;
-    selectedFiles.forEach(id => {
-      const file = getFileById(id);
-      if (file && !file.isFolder) {
-        // Create a temporary link to download the file
-        const link = document.createElement('a');
-        link.href = file.path;
-        link.download = file.name;
-        link.click();
-      }
+    
+    // Download each selected file using backend API
+    selectedFiles.forEach((fileId, index) => {
+      // Use backend API download endpoint with download=true
+      // This forces download (Content-Disposition: attachment)
+      // - Gets real extension from metadata
+      // - Downloads from Supabase
+      // - Serves with correct filename and extension
+      const downloadUrl = getDownloadUrl(fileId, true);
+      
+      // Small delay between downloads to avoid browser blocking
+      setTimeout(() => {
+        window.open(downloadUrl, '_blank');
+      }, Number(index) * 200); // 200ms delay between each download
     });
   };
 

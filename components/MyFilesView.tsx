@@ -32,8 +32,8 @@ function formatDate(dateString: string): string {
 }
 
 // Helper function to format file size
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
+function formatFileSize(bytes: number | undefined | null): string {
+  if (!bytes || bytes === 0 || isNaN(bytes)) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -78,25 +78,29 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
   const files = allFiles;
 
   const handleFileClick = async (file: BackendFile) => {
-    if (file.file_type === 'image' || file.file_type === 'video') {
-      try {
+    try {
+      // For documents (stored as .gz), use download endpoint with download=false
+      // This decompresses and serves with inline disposition for viewing
+      if (file.file_type === 'document') {
+        const viewUrl = getDownloadUrl(file.file_id, false);
+        window.open(viewUrl, '_blank');
+      } else {
+        // For media (images/videos/audio), use direct Supabase URL
         const urlData = await getFileUrl(file.file_id, 3600);
         window.open(urlData.url, '_blank');
-      } catch (err) {
-        console.error('Failed to open file:', err);
       }
-    } else {
-      // For other files, trigger download  
-      const downloadUrl = getDownloadUrl(file.file_id);
-      window.open(downloadUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to open file:', err);
+      alert('Failed to open file');
     }
   };
 
   const handleDelete = async (fileId: string) => {
-    if (confirm('Are you sure you want to delete this file?')) {
+    if (confirm('Are you sure you want to move this file to recycle bin?')) {
       try {
-        await apiDeleteFile(fileId);
+        await apiDeleteFile(fileId); // Soft delete (permanent=false by default)
         refreshFiles();
+        console.log('✓ File moved to recycle bin');
       } catch (err) {
         console.error('Failed to delete file:', err);
         alert('Failed to delete file');
