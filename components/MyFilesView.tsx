@@ -89,8 +89,8 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
         const urlData = await getFileUrl(file.file_id, 3600);
         window.open(urlData.url, '_blank');
       }
-    } catch (err) {
-      console.error('Failed to open file:', err);
+      } catch (err) {
+        console.error('Failed to open file:', err);
       alert('Failed to open file');
     }
   };
