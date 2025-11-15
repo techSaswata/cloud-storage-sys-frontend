@@ -454,7 +454,7 @@ const RecycleBinView: React.FC = () => {
                 checked={selectedFiles.size === files.length && files.length > 0}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setSelectedFiles(new Set(files.map(f => f.id)));
+                    setSelectedFiles(new Set(files.map(f => f.file_id)));
                   } else {
                     setSelectedFiles(new Set());
                   }

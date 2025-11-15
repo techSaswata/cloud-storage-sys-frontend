@@ -46,6 +46,11 @@ export interface BackendFile {
   updated_at: string;
   batch_id?: string;
   isFavorite?: boolean;
+  deleted_at?: string;
+  deleted?: boolean;
+  status?: string;
+  extension?: string;
+  size?: number;
 }
 
 export interface UploadResponse {
