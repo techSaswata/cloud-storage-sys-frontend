@@ -1,8 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BackendFile, getRecycleBin, restoreFile, permanentlyDeleteFile } from '@/lib/apiService';
 import { Document24Regular } from '@fluentui/react-icons';
+
+interface FolderItem {
+  id: string;
+  name: string;
+  isFolder: true;
+  itemCount: number;
+  created_at: string;
+  folder_path: string;
+  deleted_at?: string;
+}
 
 // Helper function to format date
 function formatDate(dateString: string): string {
@@ -33,17 +43,111 @@ function formatFileSize(bytes: number | undefined | null): string {
 }
 
 const RecycleBinView: React.FC = () => {
-  const [files, setFiles] = useState<BackendFile[]>([]);
+  const [allFiles, setAllFiles] = useState<BackendFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [hoveredHeader, setHoveredHeader] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>(''); // Current folder path in recycle bin
+
+  // Compute folders and files for current path
+  const { folders, filesInCurrentFolder } = useMemo(() => {
+    const folderSet = new Map<string, { count: number; created_at: string; deleted_at?: string }>();
+    const filesHere: BackendFile[] = [];
+
+    allFiles.forEach(file => {
+      const filePath = file.folder_path || '';
+      
+      if (currentPath === '') {
+        // At root level
+        if (!filePath) {
+          filesHere.push(file);
+        } else {
+          const firstFolder = filePath.split('/')[0];
+          if (firstFolder) {
+            const existing = folderSet.get(firstFolder);
+            if (!existing || new Date(file.created_at) > new Date(existing.created_at)) {
+              folderSet.set(firstFolder, { 
+                count: (existing?.count || 0) + 1,
+                created_at: file.created_at,
+                deleted_at: file.deleted_at
+              });
+            } else {
+              folderSet.set(firstFolder, { 
+                count: existing.count + 1,
+                created_at: existing.created_at,
+                deleted_at: existing.deleted_at
+              });
+            }
+          }
+        }
+      } else {
+        // In a specific folder
+        if (filePath === currentPath) {
+          filesHere.push(file);
+        } else if (filePath.startsWith(currentPath + '/')) {
+          const relativePath = filePath.substring(currentPath.length + 1);
+          const nextFolder = relativePath.split('/')[0];
+          if (nextFolder) {
+            const existing = folderSet.get(nextFolder);
+            if (!existing || new Date(file.created_at) > new Date(existing.created_at)) {
+              folderSet.set(nextFolder, { 
+                count: (existing?.count || 0) + 1,
+                created_at: file.created_at,
+                deleted_at: file.deleted_at
+              });
+            } else {
+              folderSet.set(nextFolder, { 
+                count: existing.count + 1,
+                created_at: existing.created_at,
+                deleted_at: existing.deleted_at
+              });
+            }
+          }
+        }
+      }
+    });
+
+    const foldersArray: FolderItem[] = Array.from(folderSet.entries()).map(([name, data]) => ({
+      id: `folder_${currentPath}/${name}`,
+      name,
+      isFolder: true as const,
+      itemCount: data.count,
+      created_at: data.created_at,
+      folder_path: currentPath ? `${currentPath}/${name}` : name,
+      deleted_at: data.deleted_at
+    }));
+
+    return {
+      folders: foldersArray,
+      filesInCurrentFolder: filesHere
+    };
+  }, [allFiles, currentPath]);
+
+  // Combined list of folders and files
+  const items = [...folders, ...filesInCurrentFolder];
+  const files = items; // For backward compatibility with existing code
+
+  // Generate breadcrumbs
+  const breadcrumbs = useMemo(() => {
+    if (!currentPath) return [{ name: 'Recycle bin', path: '' }];
+    
+    const parts = currentPath.split('/');
+    const crumbs = [{ name: 'Recycle bin', path: '' }];
+    
+    parts.forEach((part, index) => {
+      const path = parts.slice(0, index + 1).join('/');
+      crumbs.push({ name: part, path });
+    });
+    
+    return crumbs;
+  }, [currentPath]);
 
   const loadFiles = async () => {
     try {
       setLoading(true);
       const response = await getRecycleBin();
-      setFiles(response.files);
+      setAllFiles(response.files);
     } catch (err) {
       console.error('Failed to load recycle bin:', err);
     } finally {
@@ -54,19 +158,43 @@ const RecycleBinView: React.FC = () => {
   const handleRestore = async () => {
     if (selectedFiles.size === 0) return;
 
-    const confirmMessage = selectedFiles.size === 1
+    const selectedIds = Array.from(selectedFiles);
+    const filesToRestore: string[] = [];
+    
+    // Process each selected item
+    for (const itemId of selectedIds) {
+      if (itemId.startsWith('folder_')) {
+        // It's a folder - extract the folder path
+        let folderPath = itemId.substring('folder_'.length);
+        if (folderPath.startsWith('/')) {
+          folderPath = folderPath.substring(1);
+        }
+        
+        // Find all files in this folder and subfolders
+        const filesInFolder = allFiles.filter(file => {
+          const fileFolderPath = file.folder_path || '';
+          return fileFolderPath === folderPath || fileFolderPath.startsWith(folderPath + '/');
+        });
+        
+        filesInFolder.forEach(file => filesToRestore.push(file.file_id));
+      } else {
+        filesToRestore.push(itemId);
+      }
+    }
+
+    const confirmMessage = filesToRestore.length === 1
       ? 'Restore this file?'
-      : `Restore ${selectedFiles.size} files?`;
+      : `Restore ${filesToRestore.length} file(s)?`;
 
     if (!confirm(confirmMessage)) return;
 
     try {
-      for (const fileId of selectedFiles) {
+      for (const fileId of filesToRestore) {
         await restoreFile(fileId);
       }
       setSelectedFiles(new Set());
       await loadFiles();
-      console.log(`✓ ${selectedFiles.size} file(s) restored`);
+      console.log(`✓ ${filesToRestore.length} file(s) restored`);
     } catch (err) {
       console.error('Failed to restore files:', err);
       alert('Failed to restore files');
@@ -76,19 +204,43 @@ const RecycleBinView: React.FC = () => {
   const handlePermanentDelete = async () => {
     if (selectedFiles.size === 0) return;
 
-    const confirmMessage = selectedFiles.size === 1
+    const selectedIds = Array.from(selectedFiles);
+    const filesToDelete: string[] = [];
+    
+    // Process each selected item
+    for (const itemId of selectedIds) {
+      if (itemId.startsWith('folder_')) {
+        // It's a folder - extract the folder path
+        let folderPath = itemId.substring('folder_'.length);
+        if (folderPath.startsWith('/')) {
+          folderPath = folderPath.substring(1);
+        }
+        
+        // Find all files in this folder and subfolders
+        const filesInFolder = allFiles.filter(file => {
+          const fileFolderPath = file.folder_path || '';
+          return fileFolderPath === folderPath || fileFolderPath.startsWith(folderPath + '/');
+        });
+        
+        filesInFolder.forEach(file => filesToDelete.push(file.file_id));
+      } else {
+        filesToDelete.push(itemId);
+      }
+    }
+
+    const confirmMessage = filesToDelete.length === 1
       ? 'Are you sure you want to permanently delete this file? This action cannot be undone.'
-      : `Are you sure you want to permanently delete ${selectedFiles.size} files? This action cannot be undone.`;
+      : `Are you sure you want to permanently delete ${filesToDelete.length} file(s)? This action cannot be undone.`;
 
     if (!confirm(confirmMessage)) return;
 
     try {
-      for (const fileId of selectedFiles) {
+      for (const fileId of filesToDelete) {
         await permanentlyDeleteFile(fileId);
       }
       setSelectedFiles(new Set());
       await loadFiles();
-      console.log(`✓ ${selectedFiles.size} file(s) permanently deleted`);
+      console.log(`✓ ${filesToDelete.length} file(s) permanently deleted`);
     } catch (err) {
       console.error('Failed to permanently delete files:', err);
       alert('Failed to permanently delete files');
@@ -96,14 +248,14 @@ const RecycleBinView: React.FC = () => {
   };
 
   const handleEmptyRecycleBin = async () => {
-    if (files.length === 0) return;
+    if (allFiles.length === 0) return;
 
-    if (!confirm(`Are you sure you want to empty the Recycle Bin? All ${files.length} file(s) will be permanently deleted. This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to empty the Recycle Bin? All ${allFiles.length} file(s) will be permanently deleted. This action cannot be undone.`)) {
       return;
     }
 
     try {
-      for (const file of files) {
+      for (const file of allFiles) {
         await permanentlyDeleteFile(file.file_id);
       }
       await loadFiles();
@@ -240,7 +392,7 @@ const RecycleBinView: React.FC = () => {
         >
           {/* Left section - Empty Recycle Bin */}
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            {files.length > 0 && (
+            {allFiles.length > 0 && (
               <button
                 onClick={handleEmptyRecycleBin}
                 style={{
@@ -365,26 +517,44 @@ const RecycleBinView: React.FC = () => {
         </div>
       )}
 
-      {/* Page title */}
-      <div
-        style={{
-          marginBottom: '24px',
-          fontFamily: '"Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif'
-        }}
-      >
-        <h2
-          style={{
-            fontSize: '20px',
-            fontWeight: 600,
-            lineHeight: '36px',
-            color: 'rgb(173, 173, 173)',
-            margin: 0,
-            whiteSpace: 'nowrap',
-            overflow: 'hidden'
-          }}
-        >
-          Recycle bin
-        </h2>
+      {/* Breadcrumb navigation */}
+      <div style={{
+        marginBottom: '24px',
+        fontSize: '14px',
+        color: 'rgb(200, 198, 196)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        fontFamily: '"Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif'
+      }}>
+        {breadcrumbs.map((crumb, index) => (
+          <React.Fragment key={crumb.path}>
+            <button
+              onClick={() => setCurrentPath(crumb.path)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: index === breadcrumbs.length - 1 ? 'rgb(255, 255, 255)' : 'rgb(71, 158, 245)',
+                cursor: index === breadcrumbs.length - 1 ? 'default' : 'pointer',
+                padding: 0,
+                fontSize: index === 0 ? '20px' : '14px',
+                fontWeight: index === 0 ? 600 : (index === breadcrumbs.length - 1 ? 600 : 400),
+                textDecoration: 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (index !== breadcrumbs.length - 1) {
+                  e.currentTarget.style.textDecoration = 'underline';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.textDecoration = 'none';
+              }}
+            >
+              {crumb.name}
+            </button>
+            {index < breadcrumbs.length - 1 && <span style={{ color: 'rgb(150, 150, 150)' }}>›</span>}
+          </React.Fragment>
+        ))}
       </div>
 
       {/* File list table */}
@@ -451,10 +621,12 @@ const RecycleBinView: React.FC = () => {
               <input
                 type="checkbox"
                 aria-label="Select all rows"
-                checked={selectedFiles.size === files.length && files.length > 0}
+                checked={selectedFiles.size === items.length && items.length > 0}
                 onChange={(e) => {
                   if (e.target.checked) {
-                    setSelectedFiles(new Set(files.map(f => f.file_id)));
+                    setSelectedFiles(new Set(items.map(item => 
+                      'isFolder' in item && item.isFolder ? item.id : (item as BackendFile).file_id
+                    )));
                   } else {
                     setSelectedFiles(new Set());
                   }
@@ -572,19 +744,26 @@ const RecycleBinView: React.FC = () => {
           </div>
         </div>
 
-        {/* File rows */}
+        {/* File/Folder rows */}
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: '56px 40px 434px 300px 200px'
           }}
         >
-          {files.map((file, index) => {
-            const isLastRow = index === files.length - 1;
-            const deletedDate = file.deleted_at ? formatDate(file.deleted_at) : 'Unknown';
+          {items.map((item, index) => {
+            const isLastRow = index === items.length - 1;
+            const isFolder = 'isFolder' in item && item.isFolder;
+            const itemId = isFolder ? item.id : (item as BackendFile).file_id;
+            const itemName = isFolder ? item.name : (item as BackendFile).filename;
+            const deletedDate = item.deleted_at ? formatDate(item.deleted_at) : (isFolder ? formatDate(item.created_at) : 'Unknown');
             
             // Helper to get file icon
             const getFileIcon = () => {
+              if (isFolder) {
+                return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/folder.svg';
+              }
+              const file = item as BackendFile;
               const type = file.file_type;
               if (type === 'image') {
                 return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/photo.svg';
@@ -597,14 +776,19 @@ const RecycleBinView: React.FC = () => {
             };
             
             return (
-              <React.Fragment key={file.file_id}>
+              <React.Fragment key={itemId}>
                 <div
                   style={{
                     display: 'contents'
                   }}
                   role="row"
-                  onMouseEnter={() => setHoveredRow(file.file_id)}
+                  onMouseEnter={() => setHoveredRow(itemId)}
                   onMouseLeave={() => setHoveredRow(null)}
+                  onClick={() => {
+                    if (isFolder) {
+                      setCurrentPath(item.folder_path);
+                    }
+                  }}
                 >
                     {/* Checkbox cell */}
                     <div
@@ -612,21 +796,21 @@ const RecycleBinView: React.FC = () => {
                         padding: '10px 2px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
                         overflow: 'hidden',
                         borderBottomLeftRadius: isLastRow ? '12px' : '0',
-                        borderTopLeftRadius: selectedFiles.has(file.file_id) ? '8px' : '0',
+                        borderTopLeftRadius: selectedFiles.has(itemId) ? '8px' : '0',
                         position: 'relative',
                         transition: 'all 0.1s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset, rgb(41, 40, 39) 4px 0px 0px 0px inset'
                           : 'none'
                       }}
@@ -634,10 +818,10 @@ const RecycleBinView: React.FC = () => {
                       onClick={(e) => {
                         e.stopPropagation();
                         const newSelected = new Set(selectedFiles);
-                        if (newSelected.has(file.file_id)) {
-                          newSelected.delete(file.file_id);
+                        if (newSelected.has(itemId)) {
+                          newSelected.delete(itemId);
                         } else {
-                          newSelected.add(file.file_id);
+                          newSelected.add(itemId);
                         }
                         setSelectedFiles(newSelected);
                       }}
@@ -650,14 +834,14 @@ const RecycleBinView: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          opacity: hoveredRow === file.file_id || selectedFiles.has(file.file_id) ? 1 : 0,
+                          opacity: hoveredRow === itemId || selectedFiles.has(itemId) ? 1 : 0,
                           transition: 'opacity 0.1s ease'
                         }}
                       >
                         <input
                           type="checkbox"
-                          aria-label={`Select ${file.filename}`}
-                          checked={selectedFiles.has(file.file_id)}
+                          aria-label={`Select ${itemName}`}
+                          checked={selectedFiles.has(itemId)}
                           onChange={() => {}}
                           style={{
                             position: 'absolute',
@@ -675,7 +859,7 @@ const RecycleBinView: React.FC = () => {
                             height: '18px',
                             border: '1px solid rgb(161, 159, 157)',
                             borderRadius: '50%',
-                            backgroundColor: selectedFiles.has(file.file_id) ? 'rgb(71, 158, 245)' : 'rgb(41, 40, 39)',
+                            backgroundColor: selectedFiles.has(itemId) ? 'rgb(71, 158, 245)' : 'rgb(41, 40, 39)',
                             cursor: 'pointer',
                             zIndex: 1,
                             display: 'flex',
@@ -683,7 +867,7 @@ const RecycleBinView: React.FC = () => {
                             justifyContent: 'center'
                           }}
                         >
-                          {selectedFiles.has(file.file_id) && (
+                          {selectedFiles.has(itemId) && (
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="white">
                               <path d="M9.76 3.2 4.8 8.16 2.24 5.6l.72-.72L4.8 6.72 9.04 2.48l.72.72Z" />
                             </svg>
@@ -697,9 +881,9 @@ const RecycleBinView: React.FC = () => {
                         padding: '12px 0px 13px 3px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -709,7 +893,7 @@ const RecycleBinView: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
@@ -717,7 +901,7 @@ const RecycleBinView: React.FC = () => {
                     >
                       <img
                         src={getFileIcon()}
-                        alt={file.file_type}
+                        alt={isFolder ? 'folder' : (item as BackendFile).file_type}
                         style={{
                           width: '32px',
                           height: '32px'
@@ -731,16 +915,16 @@ const RecycleBinView: React.FC = () => {
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
                         overflow: 'hidden',
                         position: 'relative',
                         transition: 'all 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
@@ -757,7 +941,12 @@ const RecycleBinView: React.FC = () => {
                             maxWidth: '100%'
                           }}
                         >
-                          {file.filename || 'Unknown'}
+                          {itemName || 'Unknown'}
+                          {isFolder && (
+                            <span style={{ color: 'rgb(150, 150, 150)', marginLeft: '8px' }}>
+                              ({item.itemCount} {item.itemCount === 1 ? 'item' : 'items'})
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -768,9 +957,9 @@ const RecycleBinView: React.FC = () => {
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -779,7 +968,7 @@ const RecycleBinView: React.FC = () => {
                         alignItems: 'center',
                         position: 'relative',
                         transition: 'all 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
@@ -796,9 +985,9 @@ const RecycleBinView: React.FC = () => {
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -806,10 +995,10 @@ const RecycleBinView: React.FC = () => {
                         display: 'flex',
                         alignItems: 'center',
                         borderBottomRightRadius: isLastRow ? '12px' : '0',
-                        borderTopRightRadius: selectedFiles.has(file.file_id) ? '8px' : '0',
+                        borderTopRightRadius: selectedFiles.has(itemId) ? '8px' : '0',
                         position: 'relative',
                         transition: 'background-color 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset, rgb(41, 40, 39) -4px 0px 0px 0px inset'
                           : 'none'
                       }}
@@ -819,7 +1008,7 @@ const RecycleBinView: React.FC = () => {
                         {deletedDate}
                       </span>
                       {/* Divider line spanning all columns from left to right */}
-                      {!isLastRow && !selectedFiles.has(file.file_id) && (
+                      {!isLastRow && !selectedFiles.has(itemId) && (
                         <div
                           style={{
                             position: 'absolute',
@@ -839,8 +1028,8 @@ const RecycleBinView: React.FC = () => {
         </div>
       </div>
 
-      {/* Empty state - shown outside the table when no files */}
-      {files.length === 0 && (
+      {/* Empty state - shown outside the table when no items */}
+      {items.length === 0 && (
         <div
           style={{
             display: 'flex',

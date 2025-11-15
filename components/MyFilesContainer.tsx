@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import MyFilesHeader from './MyFilesHeader';
 import MyFilesView from './MyFilesView';
+import { useFiles } from '@/contexts/FilesContext';
 
 interface MyFilesContainerProps {
   currentFolderId: string | null;
@@ -11,6 +12,7 @@ interface MyFilesContainerProps {
 
 const MyFilesContainer: React.FC<MyFilesContainerProps> = ({ currentFolderId, setCurrentFolderId }) => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
+  const { files: allFiles } = useFiles();
 
   return (
     <>
@@ -20,6 +22,7 @@ const MyFilesContainer: React.FC<MyFilesContainerProps> = ({ currentFolderId, se
         onClearSelection={() => setSelectedFiles(new Set())}
         selectedFiles={selectedFiles}
         currentFolderId={currentFolderId}
+        allFiles={allFiles}
       />
       <MyFilesView
         currentFolderId={currentFolderId}

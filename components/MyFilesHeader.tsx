@@ -17,7 +17,7 @@ import {
   PanelRight16Regular
 } from '@fluentui/react-icons';
 import { moveFiles, copyFiles, updateFile, getAllFiles, getFileById } from '@/lib/fileStore';
-import { getDownloadUrl, deleteFile } from '@/lib/apiService';
+import { getDownloadUrl, deleteFile, BackendFile } from '@/lib/apiService';
 import { useFiles } from '@/contexts/FilesContext';
 import UploadStatusPopup, { type OperationType } from './UploadStatusPopup';
 
@@ -27,6 +27,7 @@ interface MyFilesHeaderProps {
   onClearSelection?: () => void;
   selectedFiles?: Set<string>;
   currentFolderId?: string | null;
+  allFiles?: BackendFile[]; // Add this to access all files for folder deletion
 }
 
 const MyFilesHeader: React.FC<MyFilesHeaderProps> = ({
@@ -34,7 +35,8 @@ const MyFilesHeader: React.FC<MyFilesHeaderProps> = ({
   selectedCount = 0,
   onClearSelection,
   selectedFiles = new Set(),
-  currentFolderId = null
+  currentFolderId = null,
+  allFiles = []
 }) => {
   const [showFolderPicker, setShowFolderPicker] = useState(false);
   const [pickerMode, setPickerMode] = useState<'move' | 'copy'>('move');
@@ -48,21 +50,52 @@ const MyFilesHeader: React.FC<MyFilesHeaderProps> = ({
   const handleDelete = async () => {
     if (selectedFiles.size === 0) return;
 
-    const fileIds = Array.from(selectedFiles);
-    const count = fileIds.length;
+    const selectedIds = Array.from(selectedFiles);
+    const filesToDelete: string[] = [];
+    
+    // Process each selected item
+    for (const itemId of selectedIds) {
+      // Check if it's a folder (ID starts with 'folder_')
+      if (itemId.startsWith('folder_')) {
+        // It's a folder - extract the folder path
+        // folder ID format: 'folder_/path' or 'folder_path/to/folder'
+        let folderPath = itemId.substring('folder_'.length);  // Remove 'folder_' prefix
+        // If it starts with '/', remove that too (happens when at root level)
+        if (folderPath.startsWith('/')) {
+          folderPath = folderPath.substring(1);
+        }
+        
+        // Find all files in this folder and subfolders
+        const filesInFolder = allFiles.filter(file => {
+          const fileFolderPath = file.folder_path || '';
+          return fileFolderPath === folderPath || fileFolderPath.startsWith(folderPath + '/');
+        });
+        
+        // Add file IDs to deletion list
+        filesInFolder.forEach(file => filesToDelete.push(file.file_id));
+      } else {
+        // It's a regular file
+        filesToDelete.push(itemId);
+      }
+    }
+    
+    if (filesToDelete.length === 0) {
+      alert('No files to delete');
+      return;
+    }
 
-    const confirmMessage = count === 1 
+    const confirmMessage = filesToDelete.length === 1 
       ? 'Are you sure you want to move this file to recycle bin?'
-      : `Are you sure you want to move ${count} files to recycle bin?`;
+      : `Are you sure you want to move ${filesToDelete.length} file(s) to recycle bin?`;
 
     if (!confirm(confirmMessage)) return;
 
-    setStatusCount(count);
+    setStatusCount(filesToDelete.length);
     setStatusOperation('deleting-file');
 
     try {
       // Delete each file (soft delete - moves to recycle bin)
-      for (const fileId of fileIds) {
+      for (const fileId of filesToDelete) {
         await deleteFile(fileId);
       }
 
@@ -72,7 +105,7 @@ const MyFilesHeader: React.FC<MyFilesHeaderProps> = ({
       // Refresh the file list
       await refreshFiles();
       
-      console.log(`✓ ${count} file(s) moved to recycle bin`);
+      console.log(`✓ ${filesToDelete.length} file(s) moved to recycle bin`);
 
       // Auto-hide after showing success
       setTimeout(() => {

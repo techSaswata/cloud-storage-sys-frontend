@@ -25,7 +25,7 @@ function getAuthHeaders(): Record<string, string> {
 export interface BackendFile {
   file_id: string;
   filename: string;
-  file_type: 'image' | 'video' | 'audio' | 'document' | 'code' | 'generic';
+  file_type: 'image' | 'video' | 'audio' | 'document' | 'code' | 'generic' | 'folder';
   file_size: number;
   mime_type: string;
   s3_url: string;
@@ -51,6 +51,8 @@ export interface BackendFile {
   status?: string;
   extension?: string;
   size?: number;
+  folder_path?: string;
+  isFolder?: boolean;
 }
 
 export interface UploadResponse {
@@ -164,6 +166,7 @@ export async function uploadBatch(
     compress?: boolean;
     generate_embeddings?: boolean;
     max_concurrent?: number;
+    folder_paths?: Record<string, string>; // Map of filename to folder path
   } = {}
 ): Promise<BatchUploadResponse> {
   const formData = new FormData();
@@ -177,6 +180,11 @@ export async function uploadBatch(
   formData.append('compress', String(options.compress ?? true));
   formData.append('generate_embeddings', String(options.generate_embeddings ?? true));
   if (options.max_concurrent) formData.append('max_concurrent', String(options.max_concurrent));
+  
+  // Add folder paths if provided
+  if (options.folder_paths) {
+    formData.append('folder_paths', JSON.stringify(options.folder_paths));
+  }
 
   const response = await fetch(`${API_BASE}/upload/batch`, {
     method: 'POST',

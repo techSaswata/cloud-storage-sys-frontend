@@ -454,6 +454,7 @@ async def upload_file(
 async def upload_batch(
     files: List[UploadFile] = File(...),
     batch_name: Optional[str] = Form(None),
+    folder_paths: Optional[str] = Form(None),  # JSON string of folder paths
     compress: bool = Form(True),
     generate_embeddings: bool = Form(True),
     max_concurrent: int = Form(5),
@@ -470,6 +471,7 @@ async def upload_batch(
     Args:
         files: List of files to upload
         batch_name: Optional name for this batch/folder
+        folder_paths: JSON string mapping filenames to folder paths
         compress: Whether to compress files
         generate_embeddings: Whether to generate embeddings
         max_concurrent: Maximum concurrent file processing (default: 5)
@@ -479,10 +481,19 @@ async def upload_batch(
         Batch processing result with file-by-file breakdown
     """
     import asyncio
+    import json
     
     try:
         if not files:
             raise HTTPException(status_code=400, detail="No files provided")
+        
+        # Parse folder paths if provided
+        folder_paths_map = {}
+        if folder_paths:
+            try:
+                folder_paths_map = json.loads(folder_paths)
+            except json.JSONDecodeError:
+                print("Warning: Could not parse folder_paths JSON")
         
         # Check total size
         total_size = 0
@@ -493,6 +504,8 @@ async def upload_batch(
         print(f"BATCH UPLOAD: {len(files)} files")
         if batch_name:
             print(f"Batch Name: {batch_name}")
+        if folder_paths_map:
+            print(f"Folder structure detected with {len(folder_paths_map)} files")
         print(f"{'='*70}\n")
         
         # Save all files to temp directory
@@ -513,7 +526,22 @@ async def upload_batch(
                 )
             
             # Save to temporary file
-            file_ext = Path(upload_file.filename).suffix.lower()
+            # Extract just the filename from the full path (if it contains a path)
+            full_filename = upload_file.filename
+            if '/' in full_filename:
+                # File has a path, extract folder and filename
+                path_parts = full_filename.split('/')
+                actual_filename = path_parts[-1]  # Last part is the actual filename
+                file_folder_path = '/'.join(path_parts[:-1])  # Everything else is the folder path
+                print(f"📁 Extracted from path: '{full_filename}' -> filename: '{actual_filename}', folder: '{file_folder_path}'")
+            else:
+                # No path in filename
+                actual_filename = full_filename
+                file_folder_path = folder_paths_map.get(full_filename, '')
+                if file_folder_path:
+                    print(f"📁 Using folder_paths map: '{actual_filename}' -> folder: '{file_folder_path}'")
+            
+            file_ext = Path(actual_filename).suffix.lower()
             with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
                 temp_file.write(contents)
                 temp_path = temp_file.name
@@ -521,8 +549,9 @@ async def upload_batch(
                 
                 files_data.append({
                     'path': temp_path,
-                    'filename': upload_file.filename,
-                    'size': file_size
+                    'filename': actual_filename,  # Store only the actual filename
+                    'size': file_size,
+                    'folder_path': file_folder_path  # Store the folder path separately
                 })
         
         print(f"✓ Saved {len(files)} files to temporary storage")
@@ -974,6 +1003,13 @@ async def list_recyclebin(
                     metadata.get('file_extension') or
                     ''
                 )
+            
+            # Add folder_path if present
+            folder_path = metadata.get('custom', {}).get('folder_path', '')
+            if folder_path:
+                media['folder_path'] = folder_path
+            else:
+                media['folder_path'] = ''
             
             files_list.append(media)
         
@@ -1624,6 +1660,13 @@ async def list_media(
                     metadata.get('file_extension') or
                     ''
                 )
+            
+            # Add folder path from custom metadata if available
+            folder_path = metadata.get('custom', {}).get('folder_path', '')
+            if folder_path:
+                media['folder_path'] = folder_path
+            else:
+                media['folder_path'] = ''
             
             media_list.append(media)
         

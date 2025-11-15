@@ -221,6 +221,10 @@ class BatchProcessor:
                 if user_id:
                     file_metadata['user_id'] = user_id
                 
+                # Add folder path if present
+                if 'folder_path' in file_data and file_data['folder_path']:
+                    file_metadata['folder_path'] = file_data['folder_path']
+                
                 result = await self.process_file_async(
                     file_path=file_data['path'],
                     filename=file_data['filename'],

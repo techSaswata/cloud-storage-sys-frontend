@@ -58,11 +58,28 @@ export function useFileUpload() {
     try {
       setProgress({ fileName: `${fileArray.length} files`, progress: 30 });
       
+      // Extract folder paths from files (if available)
+      const folderPaths: Record<string, string> = {};
+      fileArray.forEach((file: any) => {
+        // Check if file has webkitRelativePath (set when uploading a folder)
+        if (file.webkitRelativePath) {
+          // Extract folder path (everything except the filename)
+          const pathParts = file.webkitRelativePath.split('/');
+          if (pathParts.length > 1) {
+            // Remove the filename to get folder path
+            const folderPath = pathParts.slice(0, -1).join('/');
+            folderPaths[file.name] = folderPath;
+            console.log(`📁 File ${file.name} is in folder: ${folderPath}`);
+          }
+        }
+      });
+      
       const result = await apiUploadBatch(fileArray, {
         batch_name: `Upload ${new Date().toLocaleString()}`,
         compress: true,
         generate_embeddings: true,
         max_concurrent: 5,
+        folder_paths: Object.keys(folderPaths).length > 0 ? folderPaths : undefined,
       });
 
       setProgress({ fileName: `${fileArray.length} files`, progress: 100 });

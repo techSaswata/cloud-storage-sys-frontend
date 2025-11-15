@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useFiles } from '@/contexts/FilesContext';
 import { BackendFile, getThumbnailUrl, getFileUrl, getDownloadUrl, deleteFile as apiDeleteFile } from '@/lib/apiService';
 import { Document24Regular } from '@fluentui/react-icons';
@@ -10,6 +10,15 @@ interface MyFilesViewProps {
   setCurrentFolderId: (id: string | null) => void;
   selectedFiles: Set<string>;
   setSelectedFiles: (files: Set<string>) => void;
+}
+
+interface FolderItem {
+  id: string;
+  name: string;
+  isFolder: true;
+  itemCount: number;
+  created_at: string;
+  folder_path: string;
 }
 
 // Helper function to format date
@@ -41,9 +50,14 @@ function formatFileSize(bytes: number | undefined | null): string {
 }
 
 // Helper function to get file icon based on type
-function getFileIcon(file: BackendFile): string {
-  const type = file.file_type;
-  const ext = file.filename?.split('.').pop()?.toLowerCase() || '';
+function getFileIcon(file: BackendFile | FolderItem): string {
+  if ('isFolder' in file && file.isFolder) {
+    return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/folder.svg';
+  }
+  
+  const backendFile = file as BackendFile;
+  const type = backendFile.file_type;
+  const ext = backendFile.filename?.split('.').pop()?.toLowerCase() || '';
   
   if (type === 'image') {
     return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/photo.svg';
@@ -73,11 +87,97 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [hoveredHeader, setHoveredHeader] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>(''); // Current folder path (e.g., "hello" or "hello/subfolder")
 
-  // Filter files - for now, show all files (no folder structure yet)
-  const files = allFiles;
+  // Compute folders and files for current path
+  const { folders, filesInCurrentFolder } = useMemo(() => {
+    // Get unique folders at current path level
+    const folderSet = new Map<string, { count: number; created_at: string }>();
+    const filesHere: BackendFile[] = [];
 
-  const handleFileClick = async (file: BackendFile) => {
+    allFiles.forEach(file => {
+      const filePath = file.folder_path || '';
+      
+      // If file is in current path or its subfolder
+      if (currentPath === '') {
+        // At root level
+        if (!filePath) {
+          // File is at root
+          filesHere.push(file);
+        } else {
+          // File is in a folder, extract first level folder name
+          const firstFolder = filePath.split('/')[0];
+          if (firstFolder) {
+            const existing = folderSet.get(firstFolder);
+            if (!existing || new Date(file.created_at) > new Date(existing.created_at)) {
+              folderSet.set(firstFolder, { 
+                count: (existing?.count || 0) + 1,
+                created_at: file.created_at 
+              });
+            } else {
+              folderSet.set(firstFolder, { 
+                count: existing.count + 1,
+                created_at: existing.created_at 
+              });
+            }
+          }
+        }
+      } else {
+        // In a specific folder
+        if (filePath === currentPath) {
+          // File is directly in current folder
+          filesHere.push(file);
+        } else if (filePath.startsWith(currentPath + '/')) {
+          // File is in a subfolder
+          const relativePath = filePath.substring(currentPath.length + 1);
+          const nextFolder = relativePath.split('/')[0];
+          if (nextFolder) {
+            const existing = folderSet.get(nextFolder);
+            if (!existing || new Date(file.created_at) > new Date(existing.created_at)) {
+              folderSet.set(nextFolder, { 
+                count: (existing?.count || 0) + 1,
+                created_at: file.created_at 
+              });
+            } else {
+              folderSet.set(nextFolder, { 
+                count: existing.count + 1,
+                created_at: existing.created_at 
+              });
+            }
+          }
+        }
+      }
+    });
+
+    // Convert folder set to array
+    const foldersArray: FolderItem[] = Array.from(folderSet.entries()).map(([name, data]) => ({
+      id: `folder_${currentPath}/${name}`,
+      name,
+      isFolder: true as const,
+      itemCount: data.count,
+      created_at: data.created_at,
+      folder_path: currentPath ? `${currentPath}/${name}` : name
+    }));
+
+    return {
+      folders: foldersArray,
+      filesInCurrentFolder: filesHere
+    };
+  }, [allFiles, currentPath]);
+
+  // Combined list of folders and files
+  const items = [...folders, ...filesInCurrentFolder];
+
+  const handleItemClick = async (item: BackendFile | FolderItem) => {
+    // Check if it's a folder
+    if ('isFolder' in item && item.isFolder) {
+      // Navigate into folder
+      setCurrentPath(item.folder_path);
+      return;
+    }
+
+    // It's a file
+    const file = item as BackendFile;
     try {
       // For documents (stored as .gz), use download endpoint with download=false
       // This decompresses and serves with inline disposition for viewing
@@ -89,24 +189,78 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
         const urlData = await getFileUrl(file.file_id, 3600);
         window.open(urlData.url, '_blank');
       }
-      } catch (err) {
-        console.error('Failed to open file:', err);
+    } catch (err) {
+      console.error('Failed to open file:', err);
       alert('Failed to open file');
     }
   };
 
-  const handleDelete = async (fileId: string) => {
-    if (confirm('Are you sure you want to move this file to recycle bin?')) {
-      try {
-        await apiDeleteFile(fileId); // Soft delete (permanent=false by default)
-        refreshFiles();
-        console.log('✓ File moved to recycle bin');
-      } catch (err) {
-        console.error('Failed to delete file:', err);
-        alert('Failed to delete file');
+  const handleDelete = async (itemId: string) => {
+    // Check if it's a folder or a file
+    const item = items.find(i => {
+      const iId = ('isFolder' in i && i.isFolder) ? i.id : (i as BackendFile).file_id;
+      return iId === itemId;
+    });
+    
+    if (!item) return;
+    
+    const isFolder = 'isFolder' in item && item.isFolder;
+    
+    if (isFolder) {
+      // It's a folder - delete all files in this folder
+      const folderPath = item.folder_path;
+      const filesToDelete = allFiles.filter(file => {
+        const fileFolderPath = file.folder_path || '';
+        return fileFolderPath === folderPath || fileFolderPath.startsWith(folderPath + '/');
+      });
+      
+      const confirmMessage = `Are you sure you want to move this folder and all ${filesToDelete.length} file(s) inside to recycle bin?`;
+      if (confirm(confirmMessage)) {
+        try {
+          // Delete all files in the folder
+          for (const file of filesToDelete) {
+            await apiDeleteFile(file.file_id);
+          }
+          refreshFiles();
+          console.log(`✓ Folder and ${filesToDelete.length} file(s) moved to recycle bin`);
+        } catch (err) {
+          console.error('Failed to delete folder:', err);
+          alert('Failed to delete folder');
+        }
+      }
+    } else {
+      // It's a file
+      if (confirm('Are you sure you want to move this file to recycle bin?')) {
+        try {
+          await apiDeleteFile(itemId);
+          refreshFiles();
+          console.log('✓ File moved to recycle bin');
+        } catch (err) {
+          console.error('Failed to delete file:', err);
+          alert('Failed to delete file');
+        }
       }
     }
   };
+
+  const handleBreadcrumbClick = (path: string) => {
+    setCurrentPath(path);
+  };
+
+  // Generate breadcrumbs
+  const breadcrumbs = useMemo(() => {
+    if (!currentPath) return [{ name: 'My files', path: '' }];
+    
+    const parts = currentPath.split('/');
+    const crumbs = [{ name: 'My files', path: '' }];
+    
+    parts.forEach((part, index) => {
+      const path = parts.slice(0, index + 1).join('/');
+      crumbs.push({ name: part, path });
+    });
+    
+    return crumbs;
+  }, [currentPath]);
 
   if (loading) {
     return (
@@ -118,8 +272,49 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
 
   return (
     <div className="mt-2">
-      {/* Conditional rendering: Show table only if files exist, otherwise show empty state */}
-      {files.length > 0 ? (
+      {/* Breadcrumb navigation */}
+      {currentPath && (
+        <div style={{
+          marginBottom: '16px',
+          fontSize: '14px',
+          color: 'rgb(200, 198, 196)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          {breadcrumbs.map((crumb, index) => (
+            <React.Fragment key={crumb.path}>
+              <button
+                onClick={() => handleBreadcrumbClick(crumb.path)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: index === breadcrumbs.length - 1 ? 'rgb(255, 255, 255)' : 'rgb(71, 158, 245)',
+                  cursor: index === breadcrumbs.length - 1 ? 'default' : 'pointer',
+                  padding: 0,
+                  fontSize: '14px',
+                  textDecoration: index === breadcrumbs.length - 1 ? 'none' : 'none',
+                  fontWeight: index === breadcrumbs.length - 1 ? 600 : 400
+                }}
+                onMouseEnter={(e) => {
+                  if (index !== breadcrumbs.length - 1) {
+                    e.currentTarget.style.textDecoration = 'underline';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.textDecoration = 'none';
+                }}
+              >
+                {crumb.name}
+              </button>
+              {index < breadcrumbs.length - 1 && <span style={{ color: 'rgb(150, 150, 150)' }}>›</span>}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+
+      {/* Conditional rendering: Show table only if items exist, otherwise show empty state */}
+      {items.length > 0 ? (
         <div
           style={{
             border: '1px solid rgb(41, 40, 39)',
@@ -183,14 +378,19 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                 <input
                   type="checkbox"
                   aria-label="Select all rows"
-                  checked={selectedFiles.size === files.length && files.length > 0}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedFiles(new Set(files.map(f => f.file_id)));
-                    } else {
-                      setSelectedFiles(new Set());
-                    }
-                  }}
+              checked={selectedFiles.size === items.length && items.length > 0}
+              onChange={(e) => {
+                if (e.target.checked) {
+                  // Select all items (folders and files)
+                  const allIds = items.map(item => {
+                    const isFolder = 'isFolder' in item && item.isFolder;
+                    return isFolder ? item.id : (item as BackendFile).file_id;
+                  });
+                  setSelectedFiles(new Set(allIds));
+                } else {
+                  setSelectedFiles(new Set());
+                }
+              }}
                   style={{
                     position: 'absolute',
                     width: '24px',
@@ -327,23 +527,27 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
             </div>
           </div>
 
-          {/* File rows */}
+          {/* File/Folder rows */}
           <div
             style={{
               display: 'grid',
               gridTemplateColumns: '56px 40px 434px 200px 200px 260px'
             }}
           >
-            {files.map((file, index) => {
-              const isLastRow = index === files.length - 1;
+            {items.map((item, index) => {
+              const isLastRow = index === items.length - 1;
+              const isFolder = 'isFolder' in item && item.isFolder;
+              const itemId = isFolder ? item.id : (item as BackendFile).file_id;
+              const itemName = isFolder ? item.name : (item as BackendFile).filename;
+              
               return (
-                <React.Fragment key={file.file_id}>
+                <React.Fragment key={itemId}>
                   <div
                     style={{
                       display: 'contents'
                     }}
                     role="row"
-                    onMouseEnter={() => setHoveredRow(file.file_id)}
+                    onMouseEnter={() => setHoveredRow(itemId)}
                     onMouseLeave={() => setHoveredRow(null)}
                   >
                     {/* Checkbox cell */}
@@ -352,21 +556,21 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '10px 2px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
                         overflow: 'hidden',
                         borderBottomLeftRadius: isLastRow ? '12px' : '0',
-                        borderTopLeftRadius: selectedFiles.has(file.file_id) ? '8px' : '0',
+                        borderTopLeftRadius: selectedFiles.has(itemId) ? '8px' : '0',
                         position: 'relative',
                         transition: 'all 0.1s ease',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset, rgb(41, 40, 39) 4px 0px 0px 0px inset'
                           : 'none'
                       }}
@@ -374,10 +578,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                       onClick={(e) => {
                         e.stopPropagation();
                         const newSelected = new Set(selectedFiles);
-                        if (newSelected.has(file.file_id)) {
-                          newSelected.delete(file.file_id);
+                        if (newSelected.has(itemId)) {
+                          newSelected.delete(itemId);
                         } else {
-                          newSelected.add(file.file_id);
+                          newSelected.add(itemId);
                         }
                         setSelectedFiles(newSelected);
                       }}
@@ -390,14 +594,14 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          opacity: hoveredRow === file.file_id || selectedFiles.has(file.file_id) ? 1 : 0,
+                          opacity: hoveredRow === itemId || selectedFiles.has(itemId) ? 1 : 0,
                           transition: 'opacity 0.1s ease'
                         }}
                       >
                         <input
                           type="checkbox"
-                          aria-label={`Select ${file.filename}`}
-                          checked={selectedFiles.has(file.file_id)}
+                          aria-label={`Select ${itemName}`}
+                          checked={selectedFiles.has(itemId)}
                           onChange={() => {}}
                           style={{
                             position: 'absolute',
@@ -415,7 +619,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                             height: '18px',
                             border: '1px solid rgb(161, 159, 157)',
                             borderRadius: '50%',
-                            backgroundColor: selectedFiles.has(file.file_id) ? 'rgb(71, 158, 245)' : 'rgb(41, 40, 39)',
+                            backgroundColor: selectedFiles.has(itemId) ? 'rgb(71, 158, 245)' : 'rgb(41, 40, 39)',
                             cursor: 'pointer',
                             zIndex: 1,
                             display: 'flex',
@@ -423,7 +627,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                             justifyContent: 'center'
                           }}
                         >
-                          {selectedFiles.has(file.file_id) && (
+                          {selectedFiles.has(itemId) && (
                             <svg width="12" height="12" viewBox="0 0 12 12" fill="white">
                               <path d="M9.76 3.2 4.8 8.16 2.24 5.6l.72-.72L4.8 6.72 9.04 2.48l.72.72Z" />
                             </svg>
@@ -437,9 +641,9 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '12px 0px 13px 3px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -449,15 +653,15 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
                       role="gridcell"
                     >
                       <img
-                        src={getFileIcon(file)}
-                        alt={file.file_type}
+                        src={getFileIcon(item)}
+                        alt={isFolder ? 'folder' : (item as BackendFile).file_type}
                         style={{
                           width: '32px',
                           height: '32px'
@@ -470,16 +674,16 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
                         overflow: 'hidden',
                         position: 'relative',
                         transition: 'all 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
@@ -503,9 +707,19 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                                 textOverflow: 'ellipsis',
                                 maxWidth: '100%'
                               }}
-                              onDoubleClick={() => handleFileClick(file)}
+                              onClick={() => {
+                                // Single click for folders, double click for files
+                                if (isFolder) {
+                                  handleItemClick(item);
+                                }
+                              }}
+                              onDoubleClick={() => {
+                                if (!isFolder) {
+                                  handleItemClick(item);
+                                }
+                              }}
                             >
-                              {file.filename}
+                              {itemName}
                             </button>
                             <div
                               style={{
@@ -517,13 +731,13 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                                 textOverflow: 'ellipsis'
                               }}
                             >
-                              My files
+                              {currentPath ? currentPath : 'My files'}
                             </div>
                           </div>
                         </div>
 
                         {/* Action buttons - show on hover */}
-                        {hoveredRow === file.file_id && (
+                        {hoveredRow === itemId && (
                           <div style={{ display: 'flex', gap: '1px', alignItems: 'center', paddingRight: '8px' }}>
                             {/* More options button */}
                             <button
@@ -532,7 +746,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                                 height: '28px',
                                 borderRadius: '4px',
                                 border: 'none',
-                                backgroundColor: openDropdown === file.file_id ? 'rgb(61, 60, 59)' : 'transparent',
+                                backgroundColor: openDropdown === itemId ? 'rgb(61, 60, 59)' : 'transparent',
                                 color: 'rgb(200, 198, 196)',
                                 cursor: 'pointer',
                                 display: 'flex',
@@ -541,12 +755,12 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                                 transition: 'background-color 0.1s ease'
                               }}
                               onMouseEnter={(e) => {
-                                if (openDropdown !== file.file_id) {
+                                if (openDropdown !== itemId) {
                                   e.currentTarget.style.backgroundColor = 'rgb(61, 60, 59)';
                                 }
                               }}
                               onMouseLeave={(e) => {
-                                if (openDropdown !== file.file_id) {
+                                if (openDropdown !== itemId) {
                                   e.currentTarget.style.backgroundColor = 'transparent';
                                 }
                               }}
@@ -557,7 +771,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                                   top: rect.bottom + 5,
                                   left: rect.left
                                 });
-                                setOpenDropdown(openDropdown === file.file_id ? null : file.file_id);
+                                setOpenDropdown(openDropdown === itemId ? null : itemId);
                               }}
                               title="Show more"
                             >
@@ -606,9 +820,9 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -617,13 +831,13 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         alignItems: 'center',
                         position: 'relative',
                         transition: 'all 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
                       role="gridcell"
                     >
-                      <span>{formatDate(file.updated_at)}</span>
+                      <span>{formatDate(item.created_at)}</span>
                     </div>
 
                     {/* File size cell */}
@@ -632,9 +846,9 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -643,13 +857,13 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         alignItems: 'center',
                         position: 'relative',
                         transition: 'all 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset'
                           : 'none'
                       }}
                       role="gridcell"
                     >
-                      <span>{formatFileSize(file.file_size)}</span>
+                      <span>{isFolder ? `${item.itemCount} items` : formatFileSize((item as BackendFile).file_size)}</span>
                     </div>
 
                     {/* Type cell */}
@@ -658,9 +872,9 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         padding: '12px 8px 13px',
                         minHeight: '46px',
                         maxHeight: '400px',
-                        backgroundColor: selectedFiles.has(file.file_id)
+                        backgroundColor: selectedFiles.has(itemId)
                           ? 'rgb(28, 54, 80)'
-                          : hoveredRow === file.file_id
+                          : hoveredRow === itemId
                             ? 'rgb(51, 50, 49)'
                             : 'rgb(41, 40, 39)',
                         cursor: 'pointer',
@@ -668,17 +882,17 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                         display: 'flex',
                         alignItems: 'center',
                         borderBottomRightRadius: isLastRow ? '12px' : '0',
-                        borderTopRightRadius: selectedFiles.has(file.file_id) ? '8px' : '0',
+                        borderTopRightRadius: selectedFiles.has(itemId) ? '8px' : '0',
                         position: 'relative',
                         transition: 'background-color 0.1s ease',
-                        boxShadow: selectedFiles.has(file.file_id)
+                        boxShadow: selectedFiles.has(itemId)
                           ? 'rgb(41, 40, 39) 0px 4px 0px 0px inset, rgb(41, 40, 39) 0px -4px 0px 0px inset, rgb(41, 40, 39) -4px 0px 0px 0px inset'
                           : 'none'
                       }}
                       role="gridcell"
                     >
                       {/* Divider line spanning all columns from left to right */}
-                      {!isLastRow && !selectedFiles.has(file.file_id) && (
+                      {!isLastRow && !selectedFiles.has(itemId) && (
                         <div
                           style={{
                             position: 'absolute',
@@ -690,7 +904,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                           }}
                         />
                       )}
-                      <span style={{ textTransform: 'capitalize' }}>{file.file_type}</span>
+                      <span style={{ textTransform: 'capitalize' }}>{isFolder ? 'Folder' : (item as BackendFile).file_type}</span>
                     </div>
                   </div>
                 </React.Fragment>
@@ -792,9 +1006,12 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               onClick={(e) => {
                 e.stopPropagation();
-                const file = files.find(f => f.file_id === openDropdown);
-                if (file) {
-                  handleFileClick(file);
+                const item = items.find(f => {
+                  const fId = ('isFolder' in f && f.isFolder) ? f.id : (f as BackendFile).file_id;
+                  return fId === openDropdown;
+                });
+                if (item) {
+                  handleItemClick(item);
                 }
                 setOpenDropdown(null);
               }}
