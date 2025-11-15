@@ -22,6 +22,12 @@ try:
 except ImportError:
     DOCX_AVAILABLE = False
 
+try:
+    from pptx import Presentation
+    PPTX_AVAILABLE = True
+except ImportError:
+    PPTX_AVAILABLE = False
+
 # NLP and embeddings
 try:
     from sentence_transformers import SentenceTransformer
@@ -116,6 +122,27 @@ class DocumentProcessor:
         except Exception as e:
             raise Exception(f"Error extracting DOCX text: {str(e)}")
     
+    def extract_text_from_pptx(self, file_path: str) -> str:
+        """Extract text from PPTX file"""
+        if not PPTX_AVAILABLE:
+            raise ImportError("python-pptx not installed. Install with: pip install python-pptx")
+        
+        try:
+            prs = Presentation(file_path)
+            text = []
+            
+            for slide_num, slide in enumerate(prs.slides, start=1):
+                text.append(f"\n--- Slide {slide_num} ---\n")
+                
+                for shape in slide.shapes:
+                    if hasattr(shape, "text") and shape.text:
+                        text.append(shape.text)
+            
+            return '\n'.join(text)
+            
+        except Exception as e:
+            raise Exception(f"Error extracting PPTX text: {str(e)}")
+    
     def extract_text(self, file_path: str) -> str:
         """Extract text based on file type"""
         file_ext = Path(file_path).suffix.lower()
@@ -126,6 +153,8 @@ class DocumentProcessor:
             return self.extract_text_from_txt(file_path)
         elif file_ext == '.docx':
             return self.extract_text_from_docx(file_path)
+        elif file_ext in ['.pptx', '.ppt']:
+            return self.extract_text_from_pptx(file_path)
         else:
             raise ValueError(f"Unsupported document type: {file_ext}")
     
@@ -241,6 +270,27 @@ class DocumentProcessor:
                                 'producer': pdf_meta.get('/Producer', ''),
                                 'creation_date': pdf_meta.get('/CreationDate', ''),
                             }
+            except Exception as e:
+                metadata['extraction_warning'] = str(e)
+        
+        elif file_ext in ['.pptx', '.ppt']:
+            try:
+                if PPTX_AVAILABLE:
+                    prs = Presentation(file_path)
+                    metadata['slide_count'] = len(prs.slides)
+                    
+                    # Extract PPTX core properties
+                    if hasattr(prs, 'core_properties'):
+                        core_props = prs.core_properties
+                        metadata['pptx_metadata'] = {
+                            'title': core_props.title or '',
+                            'author': core_props.author or '',
+                            'subject': core_props.subject or '',
+                            'keywords': core_props.keywords or '',
+                            'comments': core_props.comments or '',
+                            'created': core_props.created.isoformat() if core_props.created else '',
+                            'modified': core_props.modified.isoformat() if core_props.modified else '',
+                        }
             except Exception as e:
                 metadata['extraction_warning'] = str(e)
         

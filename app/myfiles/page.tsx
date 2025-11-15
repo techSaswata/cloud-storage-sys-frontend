@@ -11,6 +11,7 @@ import '@/components/Sidebar.css';
 
 export default function MyFilesPage() {
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
+  const [currentPath, setCurrentPath] = useState<string>('');
 
   useEffect(() => {
     document.title = 'My files - OneDrive';
@@ -20,10 +21,15 @@ export default function MyFilesPage() {
     <ProtectedRoute>
       <div className="min-h-screen" style={{ backgroundColor: '#141414' }}>
         <Header />
-        <Sidebar activeView="0" currentFolderId={currentFolderId} />
+        <Sidebar activeView="0" currentFolderId={currentFolderId} currentPath={currentPath} />
         <MainContent>
           <PromoBanner />
-          <MyFilesContainer currentFolderId={currentFolderId} setCurrentFolderId={setCurrentFolderId} />
+          <MyFilesContainer 
+            currentFolderId={currentFolderId} 
+            setCurrentFolderId={setCurrentFolderId}
+            currentPath={currentPath}
+            setCurrentPath={setCurrentPath}
+          />
         </MainContent>
       </div>
     </ProtectedRoute>

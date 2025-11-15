@@ -10,6 +10,8 @@ interface MyFilesViewProps {
   setCurrentFolderId: (id: string | null) => void;
   selectedFiles: Set<string>;
   setSelectedFiles: (files: Set<string>) => void;
+  currentPath?: string;
+  setCurrentPath?: (path: string) => void;
 }
 
 interface FolderItem {
@@ -81,21 +83,43 @@ function getFileIcon(file: BackendFile | FolderItem): string {
   return 'https://res-1.public.onecdn.static.microsoft/files/fabric-cdn-prod_20251008.001/assets/item-types-experiment/32/genericfile.svg';
 }
 
-const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFolderId, selectedFiles, setSelectedFiles }) => {
+const MyFilesView: React.FC<MyFilesViewProps> = ({ 
+  currentFolderId, 
+  setCurrentFolderId, 
+  selectedFiles, 
+  setSelectedFiles,
+  currentPath: propCurrentPath,
+  setCurrentPath: propSetCurrentPath
+}) => {
   const { files: allFiles, loading, refreshFiles } = useFiles();
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const [hoveredHeader, setHoveredHeader] = useState(false);
-  const [currentPath, setCurrentPath] = useState<string>(''); // Current folder path (e.g., "hello" or "hello/subfolder")
+  const [internalCurrentPath, setInternalCurrentPath] = useState<string>(''); // Fallback internal state
+  
+  // Use prop if provided, otherwise use internal state
+  const currentPath = propCurrentPath !== undefined ? propCurrentPath : internalCurrentPath;
+  const setCurrentPath = propSetCurrentPath || setInternalCurrentPath;
 
   // Compute folders and files for current path
   const { folders, filesInCurrentFolder } = useMemo(() => {
-    // Get unique folders at current path level
+    // Get unique folders at current path level (virtual folders from file paths)
     const folderSet = new Map<string, { count: number; created_at: string }>();
     const filesHere: BackendFile[] = [];
+    const actualFolders: BackendFile[] = []; // Actual folder entries from backend
 
     allFiles.forEach(file => {
+      // Check if this is an actual folder entry from backend
+      if (file.isFolder || file.file_type === 'folder') {
+        const folderPathInFile = file.folder_path || '';
+        // Only include if it's at the current level
+        if (folderPathInFile === currentPath) {
+          actualFolders.push(file);
+        }
+        return; // Skip folder entries from the virtual folder logic
+      }
+
       const filePath = file.folder_path || '';
       
       // If file is in current path or its subfolder
@@ -149,8 +173,8 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
       }
     });
 
-    // Convert folder set to array
-    const foldersArray: FolderItem[] = Array.from(folderSet.entries()).map(([name, data]) => ({
+    // Convert folder set to array (virtual folders)
+    const virtualFolders: FolderItem[] = Array.from(folderSet.entries()).map(([name, data]) => ({
       id: `folder_${currentPath}/${name}`,
       name,
       isFolder: true as const,
@@ -159,8 +183,30 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
       folder_path: currentPath ? `${currentPath}/${name}` : name
     }));
 
+    // Combine actual folders (from backend) with virtual folders (from file paths)
+    // But deduplicate: if a backend folder exists with the same name, skip the virtual folder
+    const actualFolderNames = new Set(
+      actualFolders.map(f => f.filename)
+    );
+    
+    const uniqueVirtualFolders = virtualFolders.filter(
+      vf => !actualFolderNames.has(vf.name)
+    );
+    
+    // Merge backend folders with item counts from virtual folders
+    const mergedActualFolders = actualFolders.map(folder => {
+      const virtualMatch = virtualFolders.find(vf => vf.name === folder.filename);
+      if (virtualMatch) {
+        // Add itemCount to the actual folder
+        return { ...folder, itemCount: virtualMatch.itemCount };
+      }
+      return { ...folder, itemCount: 0 };
+    });
+    
+    const allFolders = [...mergedActualFolders, ...uniqueVirtualFolders];
+
     return {
-      folders: foldersArray,
+      folders: allFolders,
       filesInCurrentFolder: filesHere
     };
   }, [allFiles, currentPath]);
@@ -172,7 +218,19 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
     // Check if it's a folder
     if ('isFolder' in item && item.isFolder) {
       // Navigate into folder
-      setCurrentPath(item.folder_path);
+      // For backend folders: construct path from folder_path + filename
+      // For virtual folders: use the folder_path property
+      let targetPath: string;
+      if ('file_id' in item) {
+        // Backend folder - construct full path
+        const parentPath = item.folder_path || '';
+        const folderName = (item as BackendFile).filename;
+        targetPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+      } else {
+        // Virtual folder - use existing folder_path
+        targetPath = (item as FolderItem).folder_path;
+      }
+      setCurrentPath(targetPath);
       return;
     }
 
@@ -198,7 +256,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
   const handleDelete = async (itemId: string) => {
     // Check if it's a folder or a file
     const item = items.find(i => {
-      const iId = ('isFolder' in i && i.isFolder) ? i.id : (i as BackendFile).file_id;
+      const isFolder = 'isFolder' in i && i.isFolder;
+      const iId = isFolder 
+        ? ('id' in i ? i.id : (i as BackendFile).file_id)
+        : (i as BackendFile).file_id;
       return iId === itemId;
     });
     
@@ -207,12 +268,28 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
     const isFolder = 'isFolder' in item && item.isFolder;
     
     if (isFolder) {
-      // It's a folder - delete all files in this folder
-      const folderPath = item.folder_path;
+      // It's a folder - delete all files in this folder and the folder itself
+      // Calculate the full folder path
+      let folderPath: string;
+      if ('file_id' in item) {
+        // Backend folder - construct full path
+        const parentPath = item.folder_path || '';
+        const folderName = (item as BackendFile).filename;
+        folderPath = parentPath ? `${parentPath}/${folderName}` : folderName;
+      } else {
+        // Virtual folder - use existing folder_path
+        folderPath = (item as FolderItem).folder_path;
+      }
+      
       const filesToDelete = allFiles.filter(file => {
         const fileFolderPath = file.folder_path || '';
         return fileFolderPath === folderPath || fileFolderPath.startsWith(folderPath + '/');
       });
+      
+      // If it's a backend folder, also delete the folder entry itself
+      if ('file_id' in item) {
+        filesToDelete.push(item as BackendFile);
+      }
       
       const confirmMessage = `Are you sure you want to move this folder and all ${filesToDelete.length} file(s) inside to recycle bin?`;
       if (confirm(confirmMessage)) {
@@ -537,8 +614,13 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
             {items.map((item, index) => {
               const isLastRow = index === items.length - 1;
               const isFolder = 'isFolder' in item && item.isFolder;
-              const itemId = isFolder ? item.id : (item as BackendFile).file_id;
-              const itemName = isFolder ? item.name : (item as BackendFile).filename;
+              // For folders: use 'id' if it's a virtual folder, or 'file_id' if it's a backend folder
+              const itemId = isFolder 
+                ? ('id' in item ? item.id : (item as BackendFile).file_id)
+                : (item as BackendFile).file_id;
+              const itemName = isFolder 
+                ? ('name' in item ? item.name : (item as BackendFile).filename)
+                : (item as BackendFile).filename;
               
               return (
                 <React.Fragment key={itemId}>
@@ -863,7 +945,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
                       }}
                       role="gridcell"
                     >
-                      <span>{isFolder ? `${item.itemCount} items` : formatFileSize((item as BackendFile).file_size)}</span>
+                      <span>{isFolder ? `${item.itemCount || 0} items` : formatFileSize((item as BackendFile).file_size)}</span>
                     </div>
 
                     {/* Type cell */}
@@ -1007,7 +1089,10 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({ currentFolderId, setCurrentFo
               onClick={(e) => {
                 e.stopPropagation();
                 const item = items.find(f => {
-                  const fId = ('isFolder' in f && f.isFolder) ? f.id : (f as BackendFile).file_id;
+                  const isFolder = 'isFolder' in f && f.isFolder;
+                  const fId = isFolder 
+                    ? ('id' in f ? f.id : (f as BackendFile).file_id)
+                    : (f as BackendFile).file_id;
                   return fId === openDropdown;
                 });
                 if (item) {

@@ -91,6 +91,12 @@ class MediaInfoResponse(BaseModel):
     embedding_info: Optional[dict] = None
 
 
+class CreateFolderRequest(BaseModel):
+    """Create folder request"""
+    folder_name: str
+    folder_path: Optional[str] = None  # Parent folder path (e.g., "Documents/Work")
+
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize on startup"""
@@ -351,6 +357,7 @@ async def upload_file(
     file: UploadFile = File(...),
     compress: bool = Form(True),
     generate_embeddings: bool = Form(True),
+    folder_path: Optional[str] = Form(None),
     user: dict = Depends(get_current_user)
 ):
     """
@@ -393,16 +400,24 @@ async def upload_file(
             # Route to appropriate pipeline using Decision Engine
             engine = get_decision_engine()
             
+            # Prepare custom metadata
+            custom_meta = {
+                'original_filename': file.filename,
+                'content_type': file.content_type,
+                'user_id': user['user_id'],
+                'user_email': user.get('email'),
+            }
+            
+            # Add folder_path if provided
+            if folder_path:
+                custom_meta['folder_path'] = folder_path
+                print(f"📁 Uploading file to folder: {folder_path}")
+            
             result = engine.route_and_process(
                 file_path=temp_path,
                 compress=compress,
                 generate_embeddings=generate_embeddings,
-                custom_metadata={
-                    'original_filename': file.filename,
-                    'content_type': file.content_type,
-                    'user_id': user['user_id'],
-                    'user_email': user.get('email'),
-                }
+                custom_metadata=custom_meta
             )
             
             if not result.get('success'):
@@ -683,10 +698,109 @@ async def get_batch_status(batch_id: str, user: dict = Depends(get_current_user)
             )
         
         return status
-    
+        
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/folders/create")
+async def create_folder(
+    request: CreateFolderRequest,
+    user: dict = Depends(get_current_user)
+):
+    """
+    Create an empty folder
+    
+    **🔒 Requires Authentication**
+    
+    Creates a folder entry in the database. Folders are lightweight metadata entries
+    that allow organizing files.
+    
+    Args:
+        request: Folder creation request with name and optional parent path
+        user: Authenticated user (injected automatically)
+        
+    Returns:
+        Folder metadata including file_id
+    """
+    try:
+        import json
+        import uuid
+        from datetime import datetime, timezone
+        from storage_db import get_db_storage
+        
+        user_id = user['user_id']
+        db_storage = get_db_storage()
+        
+        if db_storage.collection is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Database not available. Cannot create folder."
+            )
+        
+        # Build full folder path
+        if request.folder_path:
+            full_path = f"{request.folder_path}/{request.folder_name}"
+        else:
+            full_path = request.folder_name
+        
+        # Create folder metadata
+        folder_id = str(uuid.uuid4())
+        timestamp = datetime.now(timezone.utc).isoformat()
+        
+        folder_document = {
+            'file_id': folder_id,
+            'user_id': user_id,
+            'filename': request.folder_name,
+            'file_type': 'folder',
+            'file_size': 0,
+            'mime_type': 'application/x-directory',
+            'created_at': timestamp,
+            'updated_at': timestamp,
+            'metadata': {
+                'type': 'folder',
+                'custom': {
+                    'folder_path': request.folder_path or '',
+                    'full_path': full_path,
+                    'is_folder': True,
+                    'item_count': 0,
+                    'user_id': user_id
+                }
+            },
+            's3_url': '',
+            's3_key': '',
+            's3_info': {},
+            'status': 'active'
+        }
+        
+        # Store in MongoDB
+        result = db_storage.collection.insert_one(folder_document)
+        
+        if not result.inserted_id:
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to create folder in database"
+            )
+        
+        print(f"✓ Created folder: {full_path} (ID: {folder_id}) for user {user_id}")
+        
+        return {
+            'message': 'Folder created successfully',
+            'file_id': folder_id,
+            'folder_name': request.folder_name,
+            'folder_path': request.folder_path or '',
+            'full_path': full_path,
+            'created_at': timestamp
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ Error creating folder: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -1010,6 +1124,12 @@ async def list_recyclebin(
                 media['folder_path'] = folder_path
             else:
                 media['folder_path'] = ''
+            
+            # Check if this is a folder and add isFolder flag for frontend
+            if media.get('file_type') == 'folder':
+                media['isFolder'] = True
+            else:
+                media['isFolder'] = False
             
             files_list.append(media)
         
@@ -1667,6 +1787,12 @@ async def list_media(
                 media['folder_path'] = folder_path
             else:
                 media['folder_path'] = ''
+            
+            # Check if this is a folder and add isFolder flag for frontend
+            if media.get('file_type') == 'folder':
+                media['isFolder'] = True
+            else:
+                media['isFolder'] = False
             
             media_list.append(media)
         

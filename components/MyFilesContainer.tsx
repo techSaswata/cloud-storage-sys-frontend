@@ -8,9 +8,16 @@ import { useFiles } from '@/contexts/FilesContext';
 interface MyFilesContainerProps {
   currentFolderId: string | null;
   setCurrentFolderId: (folderId: string | null) => void;
+  currentPath?: string;
+  setCurrentPath?: (path: string) => void;
 }
 
-const MyFilesContainer: React.FC<MyFilesContainerProps> = ({ currentFolderId, setCurrentFolderId }) => {
+const MyFilesContainer: React.FC<MyFilesContainerProps> = ({ 
+  currentFolderId, 
+  setCurrentFolderId,
+  currentPath,
+  setCurrentPath
+}) => {
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const { files: allFiles } = useFiles();
 
@@ -29,6 +36,8 @@ const MyFilesContainer: React.FC<MyFilesContainerProps> = ({ currentFolderId, se
         setCurrentFolderId={setCurrentFolderId}
         selectedFiles={selectedFiles}
         setSelectedFiles={setSelectedFiles}
+        currentPath={currentPath}
+        setCurrentPath={setCurrentPath}
       />
     </>
   );

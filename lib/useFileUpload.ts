@@ -6,12 +6,12 @@ interface UploadProgress {
   progress: number;
 }
 
-export function useFileUpload() {
+export function useFileUpload(currentPath?: string) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadFile = async (file: File): Promise<UploadResponse | null> => {
+  const uploadFile = async (file: File, targetPath?: string): Promise<UploadResponse | null> => {
     console.log('🚀 Starting upload for file:', file.name);
     setUploading(true);
     setError(null);
@@ -24,6 +24,7 @@ export function useFileUpload() {
       const result = await apiUploadFile(file, {
         compress: true,
         generate_embeddings: true,
+        folder_path: targetPath || currentPath,
       });
 
       setProgress({ fileName: file.name, progress: 100 });
@@ -47,9 +48,10 @@ export function useFileUpload() {
     }
   };
 
-  const uploadMultipleFiles = async (files: FileList | File[]): Promise<BatchUploadResponse | null> => {
+  const uploadMultipleFiles = async (files: FileList | File[], targetPath?: string): Promise<BatchUploadResponse | null> => {
     const fileArray = Array.from(files);
-    console.log(`🚀 Starting batch upload for ${fileArray.length} files`);
+    const uploadPath = targetPath || currentPath || '';
+    console.log(`🚀 Starting batch upload for ${fileArray.length} files to path: "${uploadPath}"`);
     
     setUploading(true);
     setError(null);
@@ -58,7 +60,7 @@ export function useFileUpload() {
     try {
       setProgress({ fileName: `${fileArray.length} files`, progress: 30 });
       
-      // Extract folder paths from files (if available)
+      // Extract folder paths from files (if available) and prepend current path
       const folderPaths: Record<string, string> = {};
       fileArray.forEach((file: any) => {
         // Check if file has webkitRelativePath (set when uploading a folder)
@@ -67,10 +69,16 @@ export function useFileUpload() {
           const pathParts = file.webkitRelativePath.split('/');
           if (pathParts.length > 1) {
             // Remove the filename to get folder path
-            const folderPath = pathParts.slice(0, -1).join('/');
-            folderPaths[file.name] = folderPath;
-            console.log(`📁 File ${file.name} is in folder: ${folderPath}`);
+            const relativeFolderPath = pathParts.slice(0, -1).join('/');
+            // Prepend current path if we're inside a folder
+            const fullPath = uploadPath ? `${uploadPath}/${relativeFolderPath}` : relativeFolderPath;
+            folderPaths[file.name] = fullPath;
+            console.log(`📁 File ${file.name} is in folder: ${fullPath}`);
           }
+        } else if (uploadPath) {
+          // Single file upload - use current path
+          folderPaths[file.name] = uploadPath;
+          console.log(`📁 File ${file.name} will be placed in: ${uploadPath}`);
         }
       });
       

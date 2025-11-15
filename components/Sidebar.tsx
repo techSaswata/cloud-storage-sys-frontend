@@ -31,9 +31,10 @@ import {
 interface SidebarProps {
   activeView?: string;
   currentFolderId?: string | null;
+  currentPath?: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = null }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = null, currentPath = '' }) => {
   const { name } = useUser();
   const { isCollapsed, toggleSidebar } = useSidebar();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -92,7 +93,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
           isOpen={isDropdownOpen}
           onClose={() => setIsDropdownOpen(false)}
           position={dropdownPosition}
-          currentFolderId={currentFolderId}
+          currentPath={currentPath}
         />
 
         {/* Navigation Section */}

@@ -3,24 +3,27 @@
 import { useRef, useState, useEffect } from 'react';
 import { useFileUpload } from '@/lib/useFileUpload';
 import UploadStatusPopup, { type OperationType } from './UploadStatusPopup';
-import { createFolder } from '@/lib/fileStore';
+import { createFolder as apiCreateFolder } from '@/lib/apiService';
+import { useFiles } from '@/contexts/FilesContext';
 import { DocumentArrowUp20Regular, FolderArrowUp20Regular } from '@fluentui/react-icons';
 
 interface CreateUploadDropdownProps {
   isOpen: boolean;
   onClose: () => void;
   position?: { top: number; left: number };
-  currentFolderId?: string | null;
+  currentPath?: string;
 }
 
-const CreateUploadDropdown = ({ isOpen, onClose, position, currentFolderId = null }: CreateUploadDropdownProps) => {
+const CreateUploadDropdown = ({ isOpen, onClose, position, currentPath = '' }: CreateUploadDropdownProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  const { uploadMultipleFiles, progress, uploading } = useFileUpload();
+  const { uploadMultipleFiles, progress, uploading } = useFileUpload(currentPath);
+  const { refreshFiles } = useFiles();
   const [showFolderDialog, setShowFolderDialog] = useState(false);
   const [folderName, setFolderName] = useState('');
   const [uploadOperation, setUploadOperation] = useState<OperationType | null>(null);
   const [currentFileName, setCurrentFileName] = useState('');
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
 
   // Watch for upload progress changes
   useEffect(() => {
@@ -413,17 +416,27 @@ const CreateUploadDropdown = ({ isOpen, onClose, position, currentFolderId = nul
                 placeholder="Folder name"
                 value={folderName}
                 onChange={(e) => setFolderName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && folderName.trim()) {
-                    createFolder(folderName.trim(), currentFolderId);
-                    setShowFolderDialog(false);
-                    setFolderName('');
-                    window.dispatchEvent(new Event('filesUpdated'));
+                onKeyDown={async (e) => {
+                  if (e.key === 'Enter' && folderName.trim() && !isCreatingFolder) {
+                    setIsCreatingFolder(true);
+                    try {
+                      await apiCreateFolder(folderName.trim(), currentPath || undefined);
+                      setShowFolderDialog(false);
+                      setFolderName('');
+                      await refreshFiles();
+                      console.log('✅ Folder created successfully');
+                    } catch (error) {
+                      console.error('❌ Failed to create folder:', error);
+                      alert(`Failed to create folder: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                    } finally {
+                      setIsCreatingFolder(false);
+                    }
                   } else if (e.key === 'Escape') {
                     setShowFolderDialog(false);
                     setFolderName('');
                   }
                 }}
+                disabled={isCreatingFolder}
                 autoFocus
                 style={{
                   width: '100%',
@@ -437,7 +450,8 @@ const CreateUploadDropdown = ({ isOpen, onClose, position, currentFolderId = nul
                   fontFamily: '"Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif',
                   outline: 'none',
                   marginBottom: '20px',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  opacity: isCreatingFolder ? 0.6 : 1
                 }}
               />
               <div
@@ -467,28 +481,37 @@ const CreateUploadDropdown = ({ isOpen, onClose, position, currentFolderId = nul
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    if (folderName.trim()) {
-                      createFolder(folderName.trim(), currentFolderId);
-                      setShowFolderDialog(false);
-                      setFolderName('');
-                      window.dispatchEvent(new Event('filesUpdated'));
+                  onClick={async () => {
+                    if (folderName.trim() && !isCreatingFolder) {
+                      setIsCreatingFolder(true);
+                      try {
+                        await apiCreateFolder(folderName.trim(), currentPath || undefined);
+                        setShowFolderDialog(false);
+                        setFolderName('');
+                        await refreshFiles();
+                        console.log('✅ Folder created successfully');
+                      } catch (error) {
+                        console.error('❌ Failed to create folder:', error);
+                        alert(`Failed to create folder: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                      } finally {
+                        setIsCreatingFolder(false);
+                      }
                     }
                   }}
-                  disabled={!folderName.trim()}
+                  disabled={!folderName.trim() || isCreatingFolder}
                   style={{
                     height: '32px',
                     padding: '0 20px',
                     border: 'none',
                     borderRadius: '4px',
-                    backgroundColor: folderName.trim() ? 'rgb(0, 120, 212)' : 'rgb(60, 60, 60)',
-                    color: folderName.trim() ? 'rgb(255, 255, 255)' : 'rgb(120, 120, 120)',
+                    backgroundColor: folderName.trim() && !isCreatingFolder ? 'rgb(0, 120, 212)' : 'rgb(60, 60, 60)',
+                    color: folderName.trim() && !isCreatingFolder ? 'rgb(255, 255, 255)' : 'rgb(120, 120, 120)',
                     fontSize: '14px',
                     fontFamily: '"Segoe UI Web (West European)", -apple-system, "system-ui", Roboto, "Helvetica Neue", sans-serif',
-                    cursor: folderName.trim() ? 'pointer' : 'not-allowed'
+                    cursor: folderName.trim() && !isCreatingFolder ? 'pointer' : 'not-allowed'
                   }}
                 >
-                  Create
+                  {isCreatingFolder ? 'Creating...' : 'Create'}
                 </button>
               </div>
             </div>

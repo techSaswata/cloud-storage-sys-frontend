@@ -133,12 +133,16 @@ export async function uploadFile(
   options: {
     compress?: boolean;
     generate_embeddings?: boolean;
+    folder_path?: string;
   } = {}
 ): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('compress', String(options.compress ?? true));
   formData.append('generate_embeddings', String(options.generate_embeddings ?? true));
+  if (options.folder_path) {
+    formData.append('folder_path', options.folder_path);
+  }
 
   const response = await fetch(`${API_BASE}/upload`, {
     method: 'POST',
@@ -404,6 +408,38 @@ export async function getSystemStats() {
   
   if (!response.ok) {
     throw new Error('Failed to get stats');
+  }
+
+  return response.json();
+}
+
+/**
+ * Create an empty folder
+ * ⚠️ REQUIRES AUTHENTICATION
+ */
+export async function createFolder(folderName: string, folderPath?: string): Promise<{
+  message: string;
+  file_id: string;
+  folder_name: string;
+  folder_path: string;
+  full_path: string;
+  created_at: string;
+}> {
+  const response = await fetch(`${API_BASE}/folders/create`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders(),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      folder_name: folderName,
+      folder_path: folderPath || null,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to create folder' }));
+    throw new Error(error.detail || 'Failed to create folder');
   }
 
   return response.json();

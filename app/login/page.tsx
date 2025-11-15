@@ -1,18 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import './login2.css';
 
 export default function LoginPage() {
   const { sendMagicLink } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [isClicking, setIsClicking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Continuously check for token presence every 0.5 seconds
+  useEffect(() => {
+    const checkTokenInterval = setInterval(() => {
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        console.log('✅ Token detected, redirecting to home...');
+        router.push('/home');
+      }
+    }, 500); // Check every 0.5 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(checkTokenInterval);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
