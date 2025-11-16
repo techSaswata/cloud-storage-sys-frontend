@@ -25,7 +25,9 @@ import {
   PanelRightExpand20Regular,
   PanelLeftExpand20Regular,
   ChevronDown12Regular,
-  ChevronUp12Regular
+  ChevronUp12Regular,
+  Search24Regular,
+  Search24Filled
 } from '@fluentui/react-icons';
 
 interface SidebarProps {
@@ -137,6 +139,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
                   {activeView === '0' ? <Folder24Filled /> : <Folder24Regular />}
                 </span>
                 {!isCollapsed && <span className="nav-text">My files</span>}
+              </Link>
+            </li>
+            <li className={`nav-item ${activeView === 'search' ? 'nav-item-active' : ''}`} role="listitem">
+              <Link href="/search" className="nav-link" title={isCollapsed ? "Search" : ""}>
+                <span className="nav-icon-wrapper">
+                  {activeView === 'search' ? <Search24Filled /> : <Search24Regular />}
+                </span>
+                {!isCollapsed && <span className="nav-text">Search</span>}
               </Link>
             </li>
             <li className={`nav-item ${activeView === '3' ? 'nav-item-active' : ''}`} role="listitem">

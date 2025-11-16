@@ -249,7 +249,10 @@ class GenericProcessor:
             
             if db_result.get('success'):
                 result['db_info'] = db_result
-                print(f"✓ Metadata stored in MongoDB")
+                if db_result.get('updated'):
+                    print(f"✓ Metadata updated in MongoDB (file already existed)")
+                else:
+                    print(f"✓ Metadata stored in MongoDB (new file)")
             else:
                 print(f"⚠ Database storage failed: {db_result.get('error')}")
                 result['db_error'] = db_result.get('error')

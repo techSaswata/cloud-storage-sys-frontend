@@ -1,0 +1,11 @@
+{
+  "product": "Laptop",
+  "brand": "TechCorp",
+  "price": 999.99,
+  "specifications": {
+    "cpu": "Intel i7",
+    "ram": "16GB",
+    "storage": "512GB SSD"
+  }
+}
+

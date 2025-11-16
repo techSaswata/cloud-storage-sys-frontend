@@ -1,0 +1,74 @@
+{
+  "company": {
+    "id": "COMP-001",
+    "name": "Tech Corp",
+    "headquarters": {
+      "address": {
+        "street": "123 Tech Street",
+        "city": "San Francisco",
+        "state": "CA",
+        "country": "USA",
+        "coordinates": {
+          "latitude": 37.7749,
+          "longitude": -122.4194
+        }
+      },
+      "contact": {
+        "phone": "+1-555-0100",
+        "email": "info@techcorp.com",
+        "social_media": {
+          "twitter": "@techcorp",
+          "linkedin": "techcorp",
+          "github": "techcorp-official"
+        }
+      }
+    },
+    "departments": [
+      {
+        "id": "DEPT-001",
+        "name": "Engineering",
+        "head": {
+          "name": "Sarah Johnson",
+          "title": "VP of Engineering",
+          "email": "sarah.j@techcorp.com"
+        },
+        "teams": [
+          {
+            "name": "Backend",
+            "members": 15,
+            "tech_stack": ["Python", "Node.js", "Go"]
+          },
+          {
+            "name": "Frontend",
+            "members": 12,
+            "tech_stack": ["React", "TypeScript", "Next.js"]
+          }
+        ]
+      },
+      {
+        "id": "DEPT-002",
+        "name": "Product",
+        "head": {
+          "name": "Michael Chen",
+          "title": "Chief Product Officer",
+          "email": "michael.c@techcorp.com"
+        },
+        "teams": [
+          {
+            "name": "Design",
+            "members": 8,
+            "tools": ["Figma", "Adobe XD"]
+          }
+        ]
+      }
+    ],
+    "metadata": {
+      "founded": "2015-03-01",
+      "employees": 250,
+      "revenue_2024": 50000000,
+      "markets": ["North America", "Europe", "Asia"],
+      "certifications": ["ISO 9001", "SOC 2", "GDPR Compliant"]
+    }
+  }
+}
+

@@ -32,6 +32,19 @@ class Config:
     PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
     PINECONE_INDEX_NAME = os.getenv("PINECONE_INDEX_NAME", "media-embeddings")
     
+    # Gemini API (for text embeddings)
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    
+    # Google Cloud / Vertex AI (for multimodal embeddings)
+    GCP_PROJECT_ID = os.getenv("GCP_PROJECT_ID")
+    GCP_LOCATION = os.getenv("GCP_LOCATION", "us-central1")
+    
+    # Set GCP credentials path (auto-detect if in backend directory)
+    if GCP_PROJECT_ID and not os.getenv("GOOGLE_APPLICATION_CREDENTIALS"):
+        credentials_path = os.path.join(os.path.dirname(__file__), "gcp-credentials.json")
+        if os.path.exists(credentials_path):
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+    
     # Application Settings
     UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", "./uploads"))
     COMPRESSED_DIR = Path(os.getenv("COMPRESSED_DIR", "./compressed"))

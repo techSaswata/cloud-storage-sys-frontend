@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "age": 30,
+    "city": "New York",
+    "country": "USA",
+    "created_at": "2025-01-15T10:00:00Z"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com",
+    "age": 25,
+    "city": "Los Angeles",
+    "country": "USA",
+    "created_at": "2025-01-15T11:00:00Z"
+  },
+  {
+    "id": 3,
+    "name": "Bob Johnson",
+    "email": "bob.johnson@example.com",
+    "age": 35,
+    "city": "Chicago",
+    "country": "USA",
+    "created_at": "2025-01-15T12:00:00Z"
+  },
+  {
+    "id": 4,
+    "name": "Alice Williams",
+    "email": "alice.williams@example.com",
+    "age": 28,
+    "city": "Houston",
+    "country": "USA",
+    "created_at": "2025-01-15T13:00:00Z"
+  },
+  {
+    "id": 5,
+    "name": "Charlie Brown",
+    "email": "charlie.brown@example.com",
+    "age": 42,
+    "city": "Phoenix",
+    "country": "USA",
+    "created_at": "2025-01-15T14:00:00Z"
+  }
+]
+

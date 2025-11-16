@@ -2,7 +2,7 @@
 Pinecone vector database integration
 Stores and searches embeddings for semantic similarity
 """
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 import time
 
 from pinecone import Pinecone, ServerlessSpec
@@ -44,12 +44,11 @@ class PineconeStorage:
                 print(f"Creating Pinecone index: {self.index_name}")
                 
                 # Create index with serverless spec
-                # Dimension 512 for CLIP ViT-B/32 and ViT-B/16
-                # Dimension 768 for CLIP ViT-L/14
-                dimension = 512  # Default for ViT-B/32
-                
-                if Config.CLIP_MODEL == "ViT-L/14":
-                    dimension = 768
+                # CLIP ViT-B/32 generates 512-dimensional embeddings
+                # Gemini generates 768-dimensional embeddings
+                # CLIP ViT-L/14 generates 768-dimensional embeddings
+                # NOTE: Must match TARGET_EMBEDDING_DIM in embedding_service.py
+                dimension = 512  # Standard CLIP ViT-B/32 (change to 768 for Gemini)
                 
                 self.pc.create_index(
                     name=self.index_name,
@@ -174,10 +173,48 @@ class PineconeStorage:
                 'error': str(e),
             }
     
+    def query(self, query_vector: Union[List[float], np.ndarray], top_k: int = 10,
+              filter: Optional[Dict[str, Any]] = None, include_metadata: bool = True) -> Dict[str, Any]:
+        """
+        Query Pinecone index for similar vectors
+        
+        Args:
+            query_vector: Query embedding vector
+            top_k: Number of results to return
+            filter: Metadata filters
+            include_metadata: Whether to include metadata in results
+            
+        Returns:
+            Dictionary with 'matches' containing list of results
+        """
+        try:
+            # Convert numpy array to list if needed
+            if isinstance(query_vector, np.ndarray):
+                query_vector = query_vector.tolist()
+            
+            # Build query parameters
+            query_params = {
+                'vector': query_vector,
+                'top_k': top_k,
+                'include_metadata': include_metadata,
+            }
+            
+            if filter:
+                query_params['filter'] = filter
+            
+            # Query Pinecone
+            results = self.index.query(**query_params)
+            
+            return results
+            
+        except Exception as e:
+            print(f"Pinecone query error: {e}")
+            return {'matches': []}
+    
     def search_similar(self, query_embedding: np.ndarray, top_k: int = 10,
                       filter_metadata: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """
-        Search for similar embeddings
+        Search for similar embeddings (legacy method, uses query internally)
         
         Args:
             query_embedding: Query embedding vector
@@ -188,33 +225,16 @@ class PineconeStorage:
             List of similar items with scores
         """
         try:
-            # Convert numpy array to list
-            if isinstance(query_embedding, np.ndarray):
-                query_embedding = query_embedding.tolist()
+            # Use the query method
+            results = self.query(
+                query_vector=query_embedding,
+                top_k=top_k,
+                filter=filter_metadata,
+                include_metadata=True
+            )
             
-            # Build query parameters
-            query_params = {
-                'vector': query_embedding,
-                'top_k': top_k,
-                'include_metadata': True,
-            }
-            
-            if filter_metadata:
-                query_params['filter'] = filter_metadata
-            
-            # Query index
-            results = self.index.query(**query_params)
-            
-            # Format results
-            matches = []
-            for match in results.get('matches', []):
-                matches.append({
-                    'file_id': match['id'],
-                    'score': match['score'],
-                    'metadata': match.get('metadata', {}),
-                })
-            
-            return matches
+            # Convert to legacy format
+            return results.get('matches', [])
             
         except Exception as e:
             print(f"Error searching similar embeddings: {e}")

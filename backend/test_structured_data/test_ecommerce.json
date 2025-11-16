@@ -1,0 +1,111 @@
+[
+  {
+    "order_id": "ORD-2025-001",
+    "customer_id": 12345,
+    "customer_email": "john.doe@example.com",
+    "order_date": "2025-01-15T14:30:00Z",
+    "status": "shipped",
+    "items": [
+      {
+        "product_id": "PROD-001",
+        "product_name": "Wireless Mouse",
+        "quantity": 2,
+        "unit_price": 29.99,
+        "total_price": 59.98
+      },
+      {
+        "product_id": "PROD-002",
+        "product_name": "USB-C Cable",
+        "quantity": 3,
+        "unit_price": 12.99,
+        "total_price": 38.97
+      },
+      {
+        "product_id": "PROD-003",
+        "product_name": "Laptop Stand",
+        "quantity": 1,
+        "unit_price": 49.99,
+        "total_price": 49.99
+      }
+    ],
+    "shipping_address": {
+      "street": "123 Main St",
+      "city": "Springfield",
+      "state": "IL",
+      "zip": "62701",
+      "country": "USA"
+    },
+    "subtotal": 148.94,
+    "tax": 11.92,
+    "shipping_cost": 5.99,
+    "total": 166.85,
+    "payment_method": "credit_card",
+    "tracking_number": "TRACK-12345"
+  },
+  {
+    "order_id": "ORD-2025-002",
+    "customer_id": 12346,
+    "customer_email": "jane.smith@example.com",
+    "order_date": "2025-01-15T15:45:00Z",
+    "status": "processing",
+    "items": [
+      {
+        "product_id": "PROD-004",
+        "product_name": "Mechanical Keyboard",
+        "quantity": 1,
+        "unit_price": 129.99,
+        "total_price": 129.99
+      },
+      {
+        "product_id": "PROD-005",
+        "product_name": "Monitor",
+        "quantity": 2,
+        "unit_price": 299.99,
+        "total_price": 599.98
+      }
+    ],
+    "shipping_address": {
+      "street": "456 Oak Ave",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97201",
+      "country": "USA"
+    },
+    "subtotal": 729.97,
+    "tax": 58.40,
+    "shipping_cost": 0.00,
+    "total": 788.37,
+    "payment_method": "paypal",
+    "tracking_number": null
+  },
+  {
+    "order_id": "ORD-2025-003",
+    "customer_id": 12347,
+    "customer_email": "bob.wilson@example.com",
+    "order_date": "2025-01-15T16:20:00Z",
+    "status": "delivered",
+    "items": [
+      {
+        "product_id": "PROD-006",
+        "product_name": "Webcam HD",
+        "quantity": 1,
+        "unit_price": 79.99,
+        "total_price": 79.99
+      }
+    ],
+    "shipping_address": {
+      "street": "789 Pine Rd",
+      "city": "Austin",
+      "state": "TX",
+      "zip": "78701",
+      "country": "USA"
+    },
+    "subtotal": 79.99,
+    "tax": 6.40,
+    "shipping_cost": 4.99,
+    "total": 91.38,
+    "payment_method": "credit_card",
+    "tracking_number": "TRACK-12347"
+  }
+]
+

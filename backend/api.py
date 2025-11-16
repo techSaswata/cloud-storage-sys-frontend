@@ -1471,14 +1471,43 @@ async def get_media_thumbnail(
                 detail="You don't have permission to access this file"
             )
         
-        file_type = media_info.get('file_type', 'unknown')
+        file_type = media_info.get('metadata', {}).get('type') or media_info.get('file_type', 'unknown')
         
-        # For now, redirect to the main file
-        # In a production system, you'd generate actual thumbnails
-        s3_url = media_info.get('s3_url')
-        if s3_url and file_type in ['image', 'video']:
-            from fastapi.responses import RedirectResponse
-            return RedirectResponse(url=s3_url)
+        # Get S3 key
+        s3_key = media_info.get('s3_key') or media_info.get('s3_info', {}).get('s3_key')
+        
+        if not s3_key:
+            raise HTTPException(
+                status_code=404,
+                detail="File storage key not found"
+            )
+        
+        # For images and videos, return the actual file
+        if file_type in ['image', 'video']:
+            from storage_s3 import get_s3_storage
+            from fastapi.responses import StreamingResponse
+            import io
+            
+            s3_storage = get_s3_storage()
+            file_data = s3_storage.get_file_bytes(s3_key)
+            
+            if not file_data:
+                raise HTTPException(
+                    status_code=404,
+                    detail="File not found in storage"
+                )
+            
+            # Get MIME type
+            metadata = media_info.get('metadata', {})
+            mime_type = metadata.get('mime_type', 'application/octet-stream')
+            
+            return StreamingResponse(
+                io.BytesIO(file_data),
+                media_type=mime_type,
+                headers={
+                    "Content-Disposition": f"inline; filename=\"{metadata.get('file_name', 'file')}\""
+                }
+            )
         else:
             # Return a placeholder for non-visual files
             raise HTTPException(
@@ -1866,6 +1895,241 @@ async def get_pipelines():
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================================================
+# SEMANTIC SEARCH
+# ============================================================================
+
+class SemanticSearchRequest(BaseModel):
+    """Request model for semantic search"""
+    query: str
+    file_types: Optional[List[str]] = None  # ['image', 'video', 'audio', 'document', 'code', 'structured']
+    limit: int = 20
+    date_from: Optional[str] = None
+    date_to: Optional[str] = None
+
+
+@app.post("/api/search")
+async def semantic_search(
+    request: SemanticSearchRequest,
+    user: dict = Depends(get_current_user)
+):
+    """
+    🔍 **Semantic Search Across ALL Files**
+    
+    Search all your files using natural language. Works with:
+    - Images/Videos: "sunset at the beach", "cats playing"
+    - Documents: "meeting notes from last week", "project proposal"
+    - Code: "authentication function", "Python API code"
+    - Audio: "birthday song", "podcast about technology"
+    - Structured Data: "customer data", "sales report"
+    
+    **🔒 Requires Authentication**
+    
+    Args:
+        query: Natural language search query
+        file_types: Optional filter by file types
+        limit: Maximum number of results (default 20)
+        date_from: Optional start date filter (YYYY-MM-DD)
+        date_to: Optional end date filter (YYYY-MM-DD)
+        user: Authenticated user (injected)
+        
+    Returns:
+        List of matching files with similarity scores
+    """
+    try:
+        import time
+        from embedding_service import get_embedding_service
+        from storage_pinecone import PineconeStorage
+        from storage_db import get_db_storage
+        from datetime import datetime
+        
+        start_time = time.time()
+        
+        # Get user ID
+        user_id = user.get('user_id') or user.get('id')
+        if not user_id:
+            raise HTTPException(status_code=401, detail="User ID not found")
+        
+        print(f"\n🔍 Semantic Search by user {user_id}: '{request.query}'")
+        
+        # 1. Generate query embedding
+        print("   Step 1: Generating query embedding...")
+        embedding_service = get_embedding_service()
+        query_embedding = embedding_service.generate_text_embedding(request.query)
+        
+        if query_embedding is None:
+            raise HTTPException(status_code=500, detail="Failed to generate query embedding")
+        
+        # Normalize query embedding to 512 dimensions (same as stored embeddings)
+        from embedding_service import normalize_embedding_dimension, TARGET_EMBEDDING_DIM
+        query_embedding = normalize_embedding_dimension(query_embedding, TARGET_EMBEDDING_DIM)
+        
+        print(f"   ✓ Query embedding: {len(query_embedding)} dimensions")
+        
+        # 2. Search in Pinecone
+        print("   Step 2: Searching Pinecone...")
+        pinecone_storage = PineconeStorage()
+        
+        # Build filter for Pinecone
+        pinecone_filter = {}
+        
+        # Filter by file type if specified
+        if request.file_types:
+            # Map user-friendly names to stored types
+            type_mapping = {
+                'image': 'image',
+                'video': 'video',
+                'audio': 'audio',
+                'document': 'document',
+                'code': 'code',
+                'structured': 'structured',
+                'data': 'structured'
+            }
+            
+            mapped_types = [type_mapping.get(ft, ft) for ft in request.file_types]
+            pinecone_filter['type'] = {'$in': mapped_types}
+        
+        # Query Pinecone
+        search_results = pinecone_storage.query(
+            query_vector=query_embedding.tolist(),
+            top_k=min(request.limit * 2, 100),  # Get more results for filtering
+            filter=pinecone_filter,
+            include_metadata=True
+        )
+        
+        if not search_results or 'matches' not in search_results:
+            print("   ⚠ No results from Pinecone")
+            return {
+                "results": [],
+                "total": 0,
+                "query_time_ms": int((time.time() - start_time) * 1000),
+                "query": request.query
+            }
+        
+        print(f"   ✓ Found {len(search_results['matches'])} matches")
+        
+        # 3. Extract file IDs from Pinecone results
+        file_ids = []
+        score_map = {}
+        
+        for match in search_results['matches']:
+            file_id = match.get('id', '')
+            # Handle chunk IDs (format: file_id_chunk_0)
+            if '_chunk_' in file_id:
+                file_id = file_id.split('_chunk_')[0]
+            
+            score = match.get('score', 0)
+            
+            # Keep highest score for each file
+            if file_id not in score_map or score > score_map[file_id]:
+                score_map[file_id] = score
+                if file_id not in file_ids:
+                    file_ids.append(file_id)
+        
+        # 4. Fetch file metadata from MongoDB
+        print(f"   Step 3: Fetching metadata for {len(file_ids)} files...")
+        db_storage = get_db_storage()
+        
+        if not file_ids:
+            return {
+                "results": [],
+                "total": 0,
+                "query_time_ms": int((time.time() - start_time) * 1000),
+                "query": request.query
+            }
+        
+        # Build MongoDB query
+        mongo_query = {
+            'file_id': {'$in': file_ids},
+            'user_id': user_id,  # Security: only user's files
+        }
+        
+        # Add date filters if specified
+        if request.date_from or request.date_to:
+            mongo_query['created_at'] = {}
+            if request.date_from:
+                mongo_query['created_at']['$gte'] = datetime.fromisoformat(request.date_from)
+            if request.date_to:
+                mongo_query['created_at']['$lte'] = datetime.fromisoformat(request.date_to)
+        
+        # Exclude deleted files
+        mongo_query['$or'] = [
+            {'deleted': {'$exists': False}},
+            {'deleted': False}
+        ]
+        
+        # Fetch files
+        files = list(db_storage.collection.find(mongo_query).limit(request.limit))
+        
+        print(f"   ✓ Retrieved {len(files)} files")
+        
+        # 5. Format results
+        results = []
+        for file_doc in files:
+            file_id = file_doc.get('file_id')
+            metadata = file_doc.get('metadata', {})
+            s3_info = file_doc.get('s3_info', {})
+            
+            # Get similarity score
+            similarity_score = score_map.get(file_id, 0)
+            
+            # Build result object
+            result = {
+                'file_id': file_id,
+                'file_name': metadata.get('file_name', 'Unknown'),
+                'file_type': metadata.get('type', metadata.get('file_type', 'unknown')),
+                'file_extension': metadata.get('extension', metadata.get('file_extension', '')),
+                'file_size': metadata.get('file_size', 0),
+                'created_at': file_doc.get('created_at', '').isoformat() if hasattr(file_doc.get('created_at', ''), 'isoformat') else str(file_doc.get('created_at', '')),
+                'similarity_score': round(similarity_score, 4),
+                's3_key': s3_info.get('s3_key', ''),
+                'thumbnail_url': f"/media/{file_id}/thumbnail" if metadata.get('type') in ['image', 'video'] else None,
+                'preview_url': f"/media/{file_id}/download?download=false",
+                'download_url': f"/media/{file_id}/download",
+            }
+            
+            # Add type-specific metadata
+            if metadata.get('type') == 'image':
+                result['resolution'] = f"{metadata.get('width', 0)}x{metadata.get('height', 0)}"
+            elif metadata.get('type') == 'video':
+                result['duration'] = metadata.get('duration', 0)
+                result['fps'] = metadata.get('fps', 0)
+            elif metadata.get('type') == 'audio':
+                result['duration'] = metadata.get('duration', 0)
+            elif metadata.get('type') == 'document':
+                result['page_count'] = metadata.get('page_count', 0)
+            elif metadata.get('type') == 'code':
+                result['language'] = metadata.get('language', 'unknown')
+            
+            results.append(result)
+        
+        # Sort by similarity score (descending)
+        results.sort(key=lambda x: x['similarity_score'], reverse=True)
+        
+        # Limit to requested number
+        results = results[:request.limit]
+        
+        query_time = int((time.time() - start_time) * 1000)
+        print(f"   ✓ Search complete: {len(results)} results in {query_time}ms")
+        
+        return {
+            "results": results,
+            "total": len(results),
+            "query_time_ms": query_time,
+            "query": request.query,
+            "filters": {
+                "file_types": request.file_types,
+                "date_from": request.date_from,
+                "date_to": request.date_to,
+            }
+        }
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Search failed: {str(e)}")
 
 
 if __name__ == "__main__":

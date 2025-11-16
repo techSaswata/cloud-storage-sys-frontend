@@ -1,0 +1,63 @@
+[
+  {
+    "id": 1,
+    "title": "Introduction to Python",
+    "author_id": 101,
+    "category_id": 1,
+    "price": 29.99,
+    "published_date": "2024-01-15",
+    "isbn": "978-1234567890",
+    "pages": 350,
+    "language": "English",
+    "publisher_id": 501
+  },
+  {
+    "id": 2,
+    "title": "Advanced JavaScript",
+    "author_id": 102,
+    "category_id": 1,
+    "price": 39.99,
+    "published_date": "2024-03-20",
+    "isbn": "978-1234567891",
+    "pages": 420,
+    "language": "English",
+    "publisher_id": 502
+  },
+  {
+    "id": 3,
+    "title": "Data Science Handbook",
+    "author_id": 103,
+    "category_id": 2,
+    "price": 49.99,
+    "published_date": "2024-05-10",
+    "isbn": "978-1234567892",
+    "pages": 580,
+    "language": "English",
+    "publisher_id": 501
+  },
+  {
+    "id": 4,
+    "title": "Web Development Basics",
+    "author_id": 101,
+    "category_id": 1,
+    "price": 34.99,
+    "published_date": "2024-07-25",
+    "isbn": "978-1234567893",
+    "pages": 400,
+    "language": "English",
+    "publisher_id": 503
+  },
+  {
+    "id": 5,
+    "title": "Machine Learning Fundamentals",
+    "author_id": 104,
+    "category_id": 2,
+    "price": 54.99,
+    "published_date": "2024-09-15",
+    "isbn": "978-1234567894",
+    "pages": 650,
+    "language": "English",
+    "publisher_id": 502
+  }
+]
+

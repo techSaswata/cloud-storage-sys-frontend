@@ -95,23 +95,50 @@ class MongoDBStorage:
             if metadata and 'custom' in metadata:
                 user_id = metadata['custom'].get('user_id')
             
-            document = {
-                'file_id': file_id,
-                'metadata': metadata,
-                's3_info': s3_info,
-                'embedding_info': embedding_info,
-                'user_id': user_id,  # Store user_id at root level for filtering
-                'created_at': datetime.utcnow(),
-                'updated_at': datetime.utcnow(),
-            }
+            # Check if document already exists
+            existing_doc = self.collection.find_one({'file_id': file_id})
             
-            result = self.collection.insert_one(document)
-            
-            return {
-                'success': True,
-                'file_id': file_id,
-                'mongo_id': str(result.inserted_id),
-            }
+            if existing_doc:
+                # Update existing document
+                update_data = {
+                    'metadata': metadata,
+                    's3_info': s3_info,
+                    'embedding_info': embedding_info,
+                    'user_id': user_id,
+                    'updated_at': datetime.utcnow(),
+                }
+                
+                result = self.collection.update_one(
+                    {'file_id': file_id},
+                    {'$set': update_data}
+                )
+                
+                return {
+                    'success': True,
+                    'file_id': file_id,
+                    'mongo_id': str(existing_doc['_id']),
+                    'updated': True,
+                }
+            else:
+                # Insert new document
+                document = {
+                    'file_id': file_id,
+                    'metadata': metadata,
+                    's3_info': s3_info,
+                    'embedding_info': embedding_info,
+                    'user_id': user_id,  # Store user_id at root level for filtering
+                    'created_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow(),
+                }
+                
+                result = self.collection.insert_one(document)
+                
+                return {
+                    'success': True,
+                    'file_id': file_id,
+                    'mongo_id': str(result.inserted_id),
+                    'updated': False,
+                }
             
         except Exception as e:
             return {

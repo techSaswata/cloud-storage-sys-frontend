@@ -151,6 +151,26 @@ class S3Storage:
                 'error': str(e),
             }
     
+    def get_file_bytes(self, s3_key: str) -> Optional[bytes]:
+        """
+        Get file contents as bytes from S3 (without saving to disk)
+        
+        Args:
+            s3_key: S3 object key
+            
+        Returns:
+            File contents as bytes, or None if error
+        """
+        try:
+            response = self.s3_client.get_object(
+                Bucket=self.bucket_name,
+                Key=s3_key
+            )
+            return response['Body'].read()
+        except ClientError as e:
+            print(f"Error getting file from S3: {e}")
+            return None
+    
     def delete_file(self, s3_key: str) -> Dict[str, Any]:
         """
         Delete file from S3

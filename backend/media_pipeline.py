@@ -968,44 +968,56 @@ class MediaProcessor:
             else:
                 print("\nStep 3: Skipping S3 upload (not requested)")
             
-            # Step 4: Generate embeddings
+            # Step 4: Generate embeddings (using unified service)
             embedding_info = None
             
             if generate_embeddings:
                 media_type = metadata.get('type')
                 
-                # Only generate embeddings for images and videos (CLIP supports visual data)
-                if media_type in ['image', 'video']:
-                    print("\nStep 4: Generating CLIP embeddings...")
+                # Use unified embedding service for ALL media types (images, videos, audio)
+                if media_type in ['image', 'video', 'audio']:
+                    print(f"\nStep 4: Generating {media_type} embeddings (unified service)...")
                     
                     try:
-                        # Use original file for embedding (better quality)
-                        embedding = self.embeddings_generator.generate_embedding(file_path)
+                        # Import unified service
+                        from embedding_service import get_embedding_service
+                        unified_service = get_embedding_service()
                         
-                        # Store in Pinecone
-                        pinecone_metadata = {
-                            'file_id': file_id,
-                            'type': media_type,
-                            'format': metadata.get('format', ''),
-                            'original_name': os.path.basename(file_path),
-                        }
+                        # Generate embedding for any media type
+                        embedding_result = unified_service.generate_embedding(file_path, media_type)
                         
-                        pinecone_result = self.pinecone_storage.upsert_embedding(
-                            file_id=file_id,
-                            embedding=embedding,
-                            metadata=pinecone_metadata
-                        )
-                        
-                        if pinecone_result.get('success'):
-                            embedding_info = {
-                                'dimension': len(embedding),
-                                'stored_in_pinecone': True,
+                        if embedding_result and embedding_result.get('embedding') is not None:
+                            embedding = embedding_result['embedding']
+                            
+                            # Store in Pinecone
+                            pinecone_metadata = {
+                                'file_id': file_id,
+                                'type': media_type,
+                                'format': metadata.get('format', ''),
+                                'original_name': os.path.basename(file_path),
+                                'model': embedding_result.get('model', 'unknown'),
                             }
-                            result['embedding_info'] = embedding_info
-                            print(f"✓ Embedding generated and stored ({len(embedding)} dimensions)")
+                            
+                            pinecone_result = self.pinecone_storage.upsert_embedding(
+                                file_id=file_id,
+                                embedding=embedding,
+                                metadata=pinecone_metadata
+                            )
+                            
+                            if pinecone_result.get('success'):
+                                embedding_info = {
+                                    'dimension': len(embedding),
+                                    'original_dimension': embedding_result.get('original_dimension'),
+                                    'model': embedding_result.get('model'),
+                                    'stored_in_pinecone': True,
+                                }
+                                result['embedding_info'] = embedding_info
+                                print(f"✓ Embedding generated and stored ({len(embedding)} dimensions, model: {embedding_result.get('model')})")
+                            else:
+                                print(f"⚠ Pinecone storage failed: {pinecone_result.get('error')}")
+                                result['embedding_error'] = pinecone_result.get('error')
                         else:
-                            print(f"⚠ Pinecone storage failed: {pinecone_result.get('error')}")
-                            result['embedding_error'] = pinecone_result.get('error')
+                            print("⚠ Embedding generation returned None")
                     
                     except Exception as e:
                         print(f"⚠ Embedding generation failed: {e}")
@@ -1027,7 +1039,10 @@ class MediaProcessor:
             
             if db_result.get('success'):
                 result['db_info'] = db_result
-                print(f"✓ Metadata stored in database")
+                if db_result.get('updated'):
+                    print(f"✓ Metadata updated in database (file already existed)")
+                else:
+                    print(f"✓ Metadata stored in database (new file)")
             else:
                 print(f"⚠ Database storage failed: {db_result.get('error')}")
                 result['db_error'] = db_result.get('error')

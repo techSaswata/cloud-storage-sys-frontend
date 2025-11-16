@@ -421,15 +421,22 @@ class CodeProcessor:
                 print(f"⚠ S3 upload failed: {s3_info.get('error')}")
                 result['s3_error'] = s3_info.get('error')
             
-            # Step 5: Generate embeddings
+            # Step 5: Generate embeddings (using unified service)
             embedding_info = None
             
             if generate_embeddings:
-                print("\nStep 5: Generating code embeddings...")
+                print("\nStep 5: Generating code embeddings (unified service)...")
                 try:
-                    embedding = self.generate_code_embedding(code_content)
+                    # Import unified service
+                    from embedding_service import get_embedding_service
+                    unified_service = get_embedding_service()
                     
-                    if embedding:
+                    # Generate code embedding using unified service
+                    embedding_result = unified_service.generate_embedding(file_path, 'code')
+                    
+                    if embedding_result and embedding_result.get('embedding') is not None:
+                        embedding = embedding_result['embedding']
+                        
                         # Store in Pinecone
                         pinecone_metadata = {
                             'file_id': file_id,
@@ -437,6 +444,7 @@ class CodeProcessor:
                             'language': metadata.get('language', ''),
                             'file_extension': metadata.get('file_extension', ''),
                             'original_name': os.path.basename(file_path),
+                            'model': embedding_result.get('model', 'CodeBERT'),
                         }
                         
                         pinecone_result = self.pinecone_storage.upsert_embedding(
@@ -448,11 +456,12 @@ class CodeProcessor:
                         if pinecone_result.get('success'):
                             embedding_info = {
                                 'dimension': len(embedding),
-                                'model': 'codebert-base',
+                                'original_dimension': embedding_result.get('original_dimension'),
+                                'model': embedding_result.get('model'),
                                 'stored_in_pinecone': True,
                             }
                             result['embedding_info'] = embedding_info
-                            print(f"✓ Embedding generated and stored ({len(embedding)} dimensions)")
+                            print(f"✓ Embedding generated and stored ({len(embedding)} dimensions, model: {embedding_result.get('model')})")
                         else:
                             print(f"⚠ Pinecone storage failed: {pinecone_result.get('error')}")
                             result['embedding_error'] = pinecone_result.get('error')
@@ -477,7 +486,10 @@ class CodeProcessor:
             
             if db_result.get('success'):
                 result['db_info'] = db_result
-                print(f"✓ Metadata stored in MongoDB")
+                if db_result.get('updated'):
+                    print(f"✓ Metadata updated in MongoDB (file already existed)")
+                else:
+                    print(f"✓ Metadata stored in MongoDB (new file)")
             else:
                 print(f"⚠ Database storage failed: {db_result.get('error')}")
                 result['db_error'] = db_result.get('error')

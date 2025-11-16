@@ -387,22 +387,29 @@ class DocumentProcessor:
                 print(f"⚠ S3 upload failed: {s3_info.get('error')}")
                 result['s3_error'] = s3_info.get('error')
             
-            # Step 5: Chunk text and generate embeddings
+            # Step 5: Chunk text and generate embeddings (using unified service)
             embedding_info = None
             
             if generate_embeddings:
-                print("\nStep 5: Generating embeddings...")
+                print("\nStep 5: Generating embeddings (unified service)...")
                 try:
+                    # Import unified service
+                    from embedding_service import get_embedding_service, normalize_embedding_dimension, TARGET_EMBEDDING_DIM
+                    unified_service = get_embedding_service()
+                    
                     # Chunk the text
                     chunks = self.chunk_text(text_content, chunk_size=512)
                     print(f"✓ Created {len(chunks)} text chunks")
                     
-                    # Generate embeddings for each chunk
-                    chunk_embeddings = self.embedding_model.encode(chunks)
-                    
-                    # Store each chunk embedding in Pinecone
-                    for idx, (chunk, embedding) in enumerate(zip(chunks, chunk_embeddings)):
+                    # Generate embeddings for each chunk using unified service
+                    for idx, chunk in enumerate(chunks):
                         chunk_id = f"{file_id}_chunk_{idx}"
+                        
+                        # Generate text embedding (use SentenceTransformer for pure text)
+                        chunk_embedding = unified_service.generate_text_embedding(chunk, use_clip=False)
+                        if chunk_embedding is not None:
+                            # Normalize to target dimension
+                            normalized_embedding = normalize_embedding_dimension(chunk_embedding, TARGET_EMBEDDING_DIM)
                         
                         pinecone_metadata = {
                             'file_id': file_id,
@@ -411,22 +418,23 @@ class DocumentProcessor:
                             'chunk_text': chunk[:200],  # Store preview
                             'file_extension': metadata.get('file_extension', ''),
                             'original_name': os.path.basename(file_path),
+                                'model': 'SentenceTransformer',
                         }
                         
                         self.pinecone_storage.upsert_embedding(
                             file_id=chunk_id,
-                            embedding=embedding.tolist(),
+                                embedding=normalized_embedding,
                             metadata=pinecone_metadata
                         )
                     
                     embedding_info = {
-                        'dimension': len(chunk_embeddings[0]),
+                        'dimension': TARGET_EMBEDDING_DIM,
                         'num_chunks': len(chunks),
-                        'model': 'all-MiniLM-L6-v2',
+                        'model': 'SentenceTransformer (normalized to 512)',
                         'stored_in_pinecone': True,
                     }
                     result['embedding_info'] = embedding_info
-                    print(f"✓ Generated {len(chunks)} chunk embeddings ({len(chunk_embeddings[0])} dimensions)")
+                    print(f"✓ Generated {len(chunks)} chunk embeddings (normalized to {TARGET_EMBEDDING_DIM} dimensions)")
                     
                 except Exception as e:
                     print(f"⚠ Embedding generation failed: {e}")
@@ -446,7 +454,10 @@ class DocumentProcessor:
             
             if db_result.get('success'):
                 result['db_info'] = db_result
-                print(f"✓ Metadata stored in MongoDB")
+                if db_result.get('updated'):
+                    print(f"✓ Metadata updated in MongoDB (file already existed)")
+                else:
+                    print(f"✓ Metadata stored in MongoDB (new file)")
             else:
                 print(f"⚠ Database storage failed: {db_result.get('error')}")
                 result['db_error'] = db_result.get('error')
