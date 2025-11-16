@@ -49,10 +49,10 @@ export default function AuthCallbackPage() {
             
             setVerifying(false);
             
-            console.log('🔀 Redirecting to /home in 100ms...');
+            console.log('🔀 Redirecting to /myfiles in 100ms...');
             // Small delay to ensure localStorage is persisted before redirect
             setTimeout(() => {
-              window.location.href = '/home';
+              window.location.href = '/myfiles';
             }, 100);
           } else {
             const errorText = await response.text();

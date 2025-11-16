@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
-import '../login2/login.css';
+import '../login/login2.css';
 
 export default function SignUpPage() {
   const { sendMagicLink } = useAuth();

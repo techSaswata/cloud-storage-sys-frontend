@@ -197,14 +197,14 @@ export default function SearchResults({
     return (
       <div className="search-results-empty">
         <div className="empty-icon">🔍</div>
-        <h3>No results found for "{query}"</h3>
+        <h3>No results found for &quot;{query}&quot;</h3>
         <p>Try different keywords or check your spelling</p>
         <div className="empty-suggestions">
           <p>Search tips:</p>
           <ul>
-            <li>Use descriptive keywords: "beach sunset" instead of just "photo"</li>
-            <li>Try searching by content: "meeting notes" or "Python code"</li>
-            <li>Include dates: "photos from last week"</li>
+            <li>Use descriptive keywords: &quot;beach sunset&quot; instead of just &quot;photo&quot;</li>
+            <li>Try searching by content: &quot;meeting notes&quot; or &quot;Python code&quot;</li>
+            <li>Include dates: &quot;photos from last week&quot;</li>
           </ul>
         </div>
       </div>
@@ -217,7 +217,7 @@ export default function SearchResults({
       <div className="results-header">
         <div className="results-info">
           <span className="results-count">{results.length} results</span>
-          <span className="results-query">for "{query}"</span>
+          <span className="results-query">for &quot;{query}&quot;</span>
         </div>
 
         {/* View Mode Toggle */}

@@ -23,7 +23,7 @@ export default function MyFilesPage() {
         <Header />
         <Sidebar activeView="0" currentFolderId={currentFolderId} currentPath={currentPath} />
         <MainContent>
-          <PromoBanner />
+          {/* <PromoBanner /> */}
           <MyFilesContainer 
             currentFolderId={currentFolderId} 
             setCurrentFolderId={setCurrentFolderId}

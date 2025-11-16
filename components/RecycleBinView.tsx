@@ -625,7 +625,7 @@ const RecycleBinView: React.FC = () => {
                 onChange={(e) => {
                   if (e.target.checked) {
                     setSelectedFiles(new Set(items.map(item => 
-                      'isFolder' in item && item.isFolder ? item.id : (item as BackendFile).file_id
+                      'isFolder' in item && item.isFolder ? (item as FolderItem).id : (item as BackendFile).file_id
                     )));
                   } else {
                     setSelectedFiles(new Set());
@@ -754,9 +754,9 @@ const RecycleBinView: React.FC = () => {
           {items.map((item, index) => {
             const isLastRow = index === items.length - 1;
             const isFolder = 'isFolder' in item && item.isFolder;
-            const itemId = isFolder ? item.id : (item as BackendFile).file_id;
-            const itemName = isFolder ? item.name : (item as BackendFile).filename;
-            const deletedDate = item.deleted_at ? formatDate(item.deleted_at) : (isFolder ? formatDate(item.created_at) : 'Unknown');
+            const itemId = isFolder ? (item as FolderItem).id : (item as BackendFile).file_id;
+            const itemName = isFolder ? (item as FolderItem).name : (item as BackendFile).filename;
+            const deletedDate = item.deleted_at ? formatDate(item.deleted_at) : (isFolder ? formatDate((item as FolderItem).created_at) : 'Unknown');
             
             // Helper to get file icon
             const getFileIcon = () => {
@@ -786,7 +786,7 @@ const RecycleBinView: React.FC = () => {
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => {
                     if (isFolder) {
-                      setCurrentPath(item.folder_path);
+                      setCurrentPath((item as FolderItem).folder_path);
                     }
                   }}
                 >
@@ -944,7 +944,7 @@ const RecycleBinView: React.FC = () => {
                           {itemName || 'Unknown'}
                           {isFolder && (
                             <span style={{ color: 'rgb(150, 150, 150)', marginLeft: '8px' }}>
-                              ({item.itemCount} {item.itemCount === 1 ? 'item' : 'items'})
+                              ({(item as FolderItem).itemCount} {(item as FolderItem).itemCount === 1 ? 'item' : 'items'})
                             </span>
                           )}
                         </div>

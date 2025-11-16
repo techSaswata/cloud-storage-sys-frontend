@@ -461,7 +461,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({
                   // Select all items (folders and files)
                   const allIds = items.map(item => {
                     const isFolder = 'isFolder' in item && item.isFolder;
-                    return isFolder ? item.id : (item as BackendFile).file_id;
+                    return isFolder ? (item as FolderItem).id : (item as BackendFile).file_id;
                   });
                   setSelectedFiles(new Set(allIds));
                 } else {
@@ -945,7 +945,7 @@ const MyFilesView: React.FC<MyFilesViewProps> = ({
                       }}
                       role="gridcell"
                     >
-                      <span>{isFolder ? `${item.itemCount || 0} items` : formatFileSize((item as BackendFile).file_size)}</span>
+                      <span>{isFolder ? `${(item as FolderItem).itemCount || 0} items` : formatFileSize((item as BackendFile).file_size)}</span>
                     </div>
 
                     {/* Type cell */}

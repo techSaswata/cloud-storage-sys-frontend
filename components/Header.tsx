@@ -169,7 +169,7 @@ export default function Header() {
 
       <div className="header-right">
         <div className="header-buttons">
-          <div className="premium-button-container">
+          {/* <div className="premium-button-container">
             <button className="premium-button" data-automationid="Premium" title="Get more storage" aria-label="Get more storage">
               <i className="premium-icon-wrapper">
               <svg className="premium-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -178,7 +178,7 @@ export default function Header() {
               </i>
               <span className="premium-label">Get more storage</span>
             </button>
-          </div>
+          </div> */}
 
           <div className="settings-button-container">
             <button className="settings-button" title="Settings" data-automationid="Settings" aria-haspopup="true">

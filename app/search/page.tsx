@@ -138,7 +138,7 @@ function SearchPageContent() {
           <div className="search-section">
             <h1 className="search-title">Search Your Files</h1>
             <p className="search-subtitle">
-              Use natural language to find anything: "sunset photos", "meeting notes from June", "Python code"
+              Use natural language to find anything: &quot;sunset photos&quot;, &quot;meeting notes from June&quot;, &quot;Python code&quot;
             </p>
             
             <div className="search-bar-wrapper">
@@ -209,19 +209,19 @@ function SearchPageContent() {
                 <div className="examples-grid">
                   <div className="example-card" onClick={() => handleSearch('sunset photos')}>
                     <span className="example-icon">🖼️</span>
-                    <span className="example-text">"sunset photos"</span>
+                    <span className="example-text">&quot;sunset photos&quot;</span>
                   </div>
                   <div className="example-card" onClick={() => handleSearch('meeting notes')}>
                     <span className="example-icon">📄</span>
-                    <span className="example-text">"meeting notes"</span>
+                    <span className="example-text">&quot;meeting notes&quot;</span>
                   </div>
                   <div className="example-card" onClick={() => handleSearch('Python authentication')}>
                     <span className="example-icon">💻</span>
-                    <span className="example-text">"Python authentication"</span>
+                    <span className="example-text">&quot;Python authentication&quot;</span>
                   </div>
                   <div className="example-card" onClick={() => handleSearch('birthday video')}>
                     <span className="example-icon">🎬</span>
-                    <span className="example-text">"birthday video"</span>
+                    <span className="example-text">&quot;birthday video&quot;</span>
                   </div>
                 </div>
               </div>

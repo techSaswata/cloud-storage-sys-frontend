@@ -125,14 +125,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
             </div>
           )}
           <ul className="nav-list" role="list">
-            <li className={`nav-item ${activeView === '1' ? 'nav-item-active' : ''}`} role="listitem">
+            {/* <li className={`nav-item ${activeView === '1' ? 'nav-item-active' : ''}`} role="listitem">
               <Link href="/home" className="nav-link" title={isCollapsed ? "Home" : ""}>
                 <span className="nav-icon-wrapper">
                   {activeView === '1' ? <Home24Filled /> : <Home24Regular />}
                 </span>
                 {!isCollapsed && <span className="nav-text">Home</span>}
               </Link>
-            </li>
+            </li> */}
             <li className={`nav-item ${activeView === '0' ? 'nav-item-active' : ''}`} role="listitem">
               <Link href="/myfiles" className="nav-link" title={isCollapsed ? "My files" : ""}>
                 <span className="nav-icon-wrapper">
@@ -169,10 +169,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
         </div>
 
         {/* Browse Files By Section */}
-        {!isCollapsed && <BrowseFilesBy activeView={activeView} isHovered={isSidebarHovered} />}
+        {/* {!isCollapsed && <BrowseFilesBy activeView={activeView} isHovered={isSidebarHovered} />} */}
 
         {/* Collapsed Browse Section - Chevron and People Icon */}
-        {isCollapsed && (
+        {/* {isCollapsed && (
           <div className="collapsed-browse-section">
             <button
               className={`collapsed-browse-chevron ${!isBrowseExpanded ? 'collapsed' : ''}`}
@@ -187,44 +187,40 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
               </Link>
             )}
           </div>
-        )}
+        )} */}
 
         {/* Collapsed Footer Section */}
-        {isCollapsed && (
+        {/* {isCollapsed && (
           <div className="collapsed-footer">
-            {/* Collapsed Storage Section */}
             <div className="collapsed-storage-section">
-              {/* Buy Storage Button */}
               <button className="collapsed-buy-storage-button" title="Buy storage">
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                   <path d="M6 2h8l4 6-8 10L2 8l4-6z" />
                 </svg>
               </button>
 
-              {/* Storage Progress Bar */}
               <div className="collapsed-storage-progress">
                 <div className="collapsed-storage-progress-total"></div>
                 <div className="collapsed-storage-progress-used" style={{ width: '1%' }}></div>
               </div>
             </div>
 
-            {/* <button className="collapsed-footer-icon" title="Settings">
+            <button className="collapsed-footer-icon" title="Settings">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M11.34 2.07A1.5 1.5 0 0 1 12.8 3.5v.05c0 .46.26.88.68 1.08.42.2.93.14 1.28-.21l.04-.04a1.5 1.5 0 0 1 2.12 0l.6.6a1.5 1.5 0 0 1 0 2.12l-.04.04a1.5 1.5 0 0 1-.21 1.28c.2.42.62.68 1.08.68h.05a1.5 1.5 0 0 1 1.5 1.5v.8a1.5 1.5 0 0 1-1.5 1.5h-.05a1.5 1.5 0 0 1-1.08.68 1.5 1.5 0 0 1 .21 1.28l.04.04a1.5 1.5 0 0 1 0 2.12l-.6.6a1.5 1.5 0 0 1-2.12 0l-.04-.04a1.5 1.5 0 0 1-1.28-.21 1.5 1.5 0 0 1-.68 1.08v.05a1.5 1.5 0 0 1-1.5 1.5h-.8a1.5 1.5 0 0 1-1.5-1.5v-.05c0-.46-.26-.88-.68-1.08a1.5 1.5 0 0 1-1.28.21l-.04.04a1.5 1.5 0 0 1-2.12 0l-.6-.6a1.5 1.5 0 0 1 0-2.12l.04-.04a1.5 1.5 0 0 1 .21-1.28A1.5 1.5 0 0 1 2.5 12.4v-.05a1.5 1.5 0 0 1-1.5-1.5v-.8a1.5 1.5 0 0 1 1.5-1.5h.05c.46 0 .88-.26 1.08-.68a1.5 1.5 0 0 1-.21-1.28l-.04-.04a1.5 1.5 0 0 1 0-2.12l.6-.6a1.5 1.5 0 0 1 2.12 0l.04.04c.35.35.86.41 1.28.21.2-.42.68-.62 1.08-.68V3.5c0-.83.67-1.5 1.5-1.5h.8c.66 0 1.22.43 1.42 1.07ZM10 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
               </svg>
-            </button> */}
-            {/* <button className="collapsed-footer-icon" title="Help">
+            </button>
+            <button className="collapsed-footer-icon" title="Help">
               <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                 <path d="M10 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm0 1a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm0 10.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5Zm0-7.5a2.5 2.5 0 0 1 2.5 2.5c0 .86-.46 1.47-1.12 2.02l-.22.18c-.44.35-.66.6-.66 1.05a.5.5 0 1 1-1 0c0-.86.46-1.47 1.12-2.02l.22-.18c.44-.35.66-.6.66-1.05a1.5 1.5 0 0 0-3 0 .5.5 0 0 1-1 0A2.5 2.5 0 0 1 10 6Z" />
               </svg>
-            </button> */}
+            </button>
           </div>
-        )}
+        )} */}
 
         {/* Storage Quota Section */}
-        {!isCollapsed && (
+        {/* {!isCollapsed && (
           <div className="storage-quota-section">
-            {/* Storage Upsell Banner */}
             <div className="storage-upsell-banner">
               <div className="storage-upsell-text">
                 Get storage for all your files and photos.
@@ -240,16 +236,13 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
               </button>
             </div>
 
-            {/* Storage Title */}
             <div className="storage-title">Storage</div>
 
-            {/* Storage Progress Bar */}
             <div className="storage-progress">
               <div className="storage-progress-total"></div>
               <div className="storage-progress-used" style={{ width: '1%' }}></div>
             </div>
 
-            {/* Storage Info */}
             <div className="storage-info">
               <div className="storage-text">
                 <Link
@@ -263,7 +256,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView = '1', currentFolderId = n
               </div>
             </div>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

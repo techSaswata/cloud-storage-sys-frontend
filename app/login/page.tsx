@@ -21,8 +21,8 @@ export default function LoginPage() {
     const checkTokenInterval = setInterval(() => {
       const token = localStorage.getItem('access_token');
       if (token) {
-        console.log('✅ Token detected, redirecting to home...');
-        router.push('/home');
+        console.log('✅ Token detected, redirecting to myfiles...');
+        router.push('/myfiles');
       }
     }, 500); // Check every 0.5 seconds
 
