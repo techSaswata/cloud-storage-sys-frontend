@@ -18,7 +18,7 @@ export default function RecycleBinPage() {
       <Header />
       <Sidebar activeView="5" />
       <MainContent>
-        <PromoBanner />
+        {/* <PromoBanner /> */}
         <RecycleBinView />
       </MainContent>
     </div>

@@ -18,7 +18,7 @@ export default function SharedPage() {
       <Header />
       <Sidebar activeView="3" />
       <MainContent>
-        <PromoBanner />
+        {/* <PromoBanner /> */}
         <SharedWithMeView />
       </MainContent>
     </div>

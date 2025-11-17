@@ -6,7 +6,7 @@ import { FilesProvider } from "@/contexts/FilesContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 export const metadata: Metadata = {
-  title: "OneDrive",
+  title: "Sherlock",
   description: "A cloud storage application built with Next.js",
 };
 

@@ -274,9 +274,9 @@ export default function SearchResults({
               {/* Type Badge */}
               <div className="file-type-badge">{getFileTypeLabel(result.file_type)}</div>
               {/* Similarity Score */}
-              {/* <div className="similarity-score">
+              <div className="similarity-score">
                 {Math.round(result.similarity_score * 100)}% match
-              </div> */}
+              </div>
             </div>
 
             {/* File Info */}

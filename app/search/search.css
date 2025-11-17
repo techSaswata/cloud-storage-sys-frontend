@@ -12,14 +12,14 @@
 .search-title {
   font-size: 32px;
   font-weight: 700;
-  color: #1a1a1a;
+  color: #1a1a1a !important;
   margin: 0 0 8px 0;
   text-align: center;
 }
 
 .search-subtitle {
   font-size: 15px;
-  color: #666;
+  color: #666 !important;
   text-align: center;
   margin: 0 0 32px 0;
 }
@@ -40,7 +40,7 @@
 .filter-label {
   font-size: 14px;
   font-weight: 600;
-  color: #666;
+  color: #666 !important;
 }
 
 .filter-chips {
@@ -61,7 +61,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  color: #1a1a1a;
+  color: #1a1a1a !important;
 }
 
 .filter-chip:hover {
@@ -97,7 +97,7 @@
 }
 
 .error-message {
-  color: #d32f2f;
+  color: #d32f2f !important;
   font-size: 15px;
   margin-bottom: 16px;
 }
@@ -141,12 +141,12 @@
 .search-empty-state h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1a1a1a !important;
   margin: 0 0 8px 0;
 }
 
 .search-empty-state > p {
-  color: #666;
+  color: #666 !important;
   margin: 0 0 48px 0;
 }
 
@@ -159,7 +159,7 @@
 .search-examples h3 {
   font-size: 16px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1a1a1a !important;
   margin: 0 0 20px 0;
 }
 
@@ -194,7 +194,7 @@
 
 .example-text {
   font-size: 13px;
-  color: #666;
+  color: #666 !important;
   font-weight: 500;
 }
 
@@ -224,7 +224,7 @@
 
 .loading-page p {
   margin-top: 20px;
-  color: #666;
+  color: #666 !important;
   font-size: 15px;
 }
 

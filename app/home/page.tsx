@@ -20,7 +20,7 @@ export default function HomePage() {
         <Header />
         <Sidebar activeView="1" />
         <MainContent>
-          <PromoBanner />
+          {/* <PromoBanner /> */}
           <RecentFiles />
         </MainContent>
       </div>

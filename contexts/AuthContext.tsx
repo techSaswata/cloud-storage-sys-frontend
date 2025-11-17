@@ -64,6 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const sendMagicLink = async (email: string) => {
     try {
+      // Use environment variable if set, otherwise use current origin
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
+      const redirectUrl = `${baseUrl}/auth/callback`;
+      
+      console.log('🔗 Sending magic link with redirect URL:', redirectUrl);
+      
       const response = await fetch(`${API_BASE}/auth/magic-link`, {
         method: 'POST',
         headers: {
@@ -71,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         body: JSON.stringify({
           email,
-          redirect_to: `${window.location.origin}/auth/callback`,
+          redirect_to: redirectUrl,
         }),
       });
 
@@ -82,6 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
       console.log('✅ Magic link sent:', email);
+      console.log('📧 Check your email for the magic link');
       return data;
     } catch (error) {
       console.error('❌ Magic link error:', error);

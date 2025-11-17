@@ -319,12 +319,17 @@ class AuthService:
             Success message with email
         """
         try:
+            print(f"🔗 Sending magic link to: {email}")
+            print(f"🔗 Redirect URL: {redirect_to}")
+            
             response = self.supabase.auth.sign_in_with_otp({
                 "email": email,
                 "options": {
                     "email_redirect_to": redirect_to
                 }
             })
+            
+            print(f"✅ Magic link sent successfully")
             
             return {
                 'message': 'Magic link sent successfully',
